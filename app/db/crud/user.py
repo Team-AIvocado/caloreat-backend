@@ -13,10 +13,25 @@ class UserCrud:
     async def get_id(db:AsyncSession, user_id:int) -> User | None:
         result=await db.execute(select(User).filter(User.user_id == user_id))
         return result.scalar_one_or_none()    
+    
+    async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+    
+    #유저네임으로 유저 조회
+    async def get_user_by_username(db: AsyncSession, user_name:str) -> User | None:
+        result = await db.execute(select(User).where(User.username == user_name))
+        return result.scalar_one_or_none()
 
     #생성
+    # async def create_user(db: AsyncSession, username: str, email: str, hashed_password: str) -> User:
+    #     user = User(username=username, email=email, password=hashed_password)
+    #     db.add(user)
+    #     await db.flush()
+    #     await db.refresh(user)
+    #     return user
     @staticmethod
-    async def create(db:AsyncSession, user:UserCreate) -> User :
+    async def create_user(db:AsyncSession, user:UserCreate) -> User :
         db_user=User(**user.model_dump())
         db.add(db_user)
         await db.flush()

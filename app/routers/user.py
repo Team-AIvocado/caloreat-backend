@@ -20,7 +20,7 @@ router = APIRouter(prefix="/users", tags=["User"])
 # signup
 @router.post("/signup", response_model= UserRead)
 async def signup(user:UserCreate,db:AsyncSession=Depends(get_db)) -> User:
-    db_user = await UserService.signup(user,db)
+    db_user = await UserService.register_user(db,user.username, user.email, user.password)
     return db_user
 
 #회원정보조회
@@ -38,12 +38,12 @@ async def delete_user(user_id:int,
     result = await UserCrud.delete_user_by_id(user_id,db)
     return {"msg":"회원삭제","deleted":result}
 # user update
-@router.put("/update/{user_id}")
-async def update_user_by_id(user:UserUpdate,
-                            user_id:int,                             
-                            db:AsyncSession=Depends(get_db)):
-    result = await UserCrud.update_user_by_id(user,user_id,db)    
-    return result
+# @router.put("/update/{user_id}")
+# async def update_user_by_id(user:UserUpdate,
+#                             user_id:int,                             
+#                             db:AsyncSession=Depends(get_db)):
+#     result = await UserCrud.update_user_by_id(user,user_id,db)    
+#     return result
 
 
 # # login

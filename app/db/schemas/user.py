@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 #dabin
@@ -32,8 +32,8 @@ class UserUpdate(BaseModel):
 
 #회원가입 (User)
 class UserInDB(BaseModel):
-    user_id : int                       # 유저의 고유 ID(PK), 유저 식별용으로 필수 -> API 응답 전용 이름 user_id로변환
-    created_at:datetime #= Field(default_factory=lambda : datetime.now(timezone.utc))  #db읽어서 클라이언트 반환
+    id: int #= Field(..., alias="id")          # 유저의 고유 ID(PK), 유저 식별용으로 필수 -> API 응답 전용 이름 user_id로변환
+    # created_at:datetime #= Field(default_factory=lambda : datetime.now(timezone.utc))  #db읽어서 클라이언트 반환
     # provider : str                      # 유저의 가입경로, 로그인 방식 구분용 social 로그인 구현후 활성화
     
     class Config:                   
@@ -45,11 +45,12 @@ class UserRead(UserInDB):
 # Profile
 class UserProfile():
     pass
-# user_health_condition (alergic, diabetes .. )
-# 이름후보 : UserHealth / HealthCondition / MedicalCondition
+# user_health_condition (allergic, diabetes .. )
+# UserHealth / HealthCondition / MedicalCondition 작업전 이름확정()
 class UserHealth():
     pass
 
+##### UserProfile / UeserHealth
     # nickname : Optional[str] = None        # 닉네임 선택입력 -> Null허용
     # nickname : Optional[str]            # 유저의 닉네임, 서비스에서 별칭을 따로 줄 수 있다면 사용
     # phone : Optional[str]               # 유저의 전화번호, 선택적으로 제공하지 않아도 됨

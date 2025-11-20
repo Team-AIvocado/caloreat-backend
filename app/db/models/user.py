@@ -26,7 +26,7 @@ class User(Base):
         nullable=False       # NOT NULL
     )
 
-    password_hash = Column(  # passowrd Query
+    password = Column(  # passowrd Query
         String(255),         # VARCHAR
         nullable=False       # NOT NULL 
     )
@@ -37,6 +37,14 @@ class User(Base):
         nullable=False,           # NOT NULL
         default=lambda: datetime.now(timezone.utc) # DEFAULT CURRENT_TIMESTAMP -> 
     )
+    # 개발편의성 updated_at / 디버깅 , front UX, 병렬요청 충돌 방지?
+    # updated_at = Column(
+    #     DateTime(timezone=True),
+    #     nullable=True,
+    #     default=lambda: datetime.now(timezone.utc),
+    #     onupdate=lambda: datetime.now(timezone.utc)
+    # )
+
     # social 연동시 활성화
     # provider = Column(       # provider Query
     #     String(50),          # VARCHAR
