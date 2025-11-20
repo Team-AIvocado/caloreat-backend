@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     db_user: str = Field(..., alias="DB_USER")
     db_password: str = Field(..., alias="DB_PASSWORD")
     db_host: str = Field("localhost", alias="DB_HOST")
-    db_port: str = Field("3306", alias="DB_PORT")  # 우선 mysql test-> postgresql port=5432
+    db_port: str = Field("5432", alias="DB_PORT")  # postgresql port=5432
     db_name: str = Field(..., alias="DB_NAME") #caloreat
 
     # JWT settings 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     @property
     def database_url(self) -> str:
-        return f'mysql+aiomysql://{self.tmp_db}'    # postgreSQL변경필요
+        return f'postgresql+asyncpg://{self.tmp_db}'    # postgreSQL변경필요
     
     # ai_model url
     # @property
