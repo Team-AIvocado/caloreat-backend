@@ -16,3 +16,9 @@ dependencies = [
     "SQLAlchemy==2.0.44",
     "uvicorn==0.38.0", 
 ]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.1",
+]

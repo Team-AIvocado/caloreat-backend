@@ -1,0 +1,55 @@
+name: Caloreat CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # [중요] 테스트를 위한 임시 DB 컨테이너 실행
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password # CI용 임시 비번
+          POSTGRES_DB: caloreat_test
+        ports:
+          - 5432:5432
+        # DB가 완전히 켜질 때까지 대기하는 헬스체크
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # uv 설치 및 의존성 설치
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: uv sync
+
+      # 테스트 실행 (환경변수를 서비스 컨테이너 설정에 맞춤)
+      - name: Run Tests
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: caloreat_test
+          SECRET_KEY: "test_secret_key" # 테스트용 임시 키
+        run: |
+          uv run pytest

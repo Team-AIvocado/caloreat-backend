@@ -5,35 +5,40 @@ from app.db.database import Base, async_engine
 from app.db import models
 from app.routers import router
 
-#lifespan
+# lifespan
 from contextlib import asynccontextmanager
 
-#env load
+# env load
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=".env")
 
-#lifespan
+
+# lifespan
 # 현재구조는 alembic과 충돌구조 - 개발편의성
 # lifespan != migration(alembic)
 @asynccontextmanager
-async def lifespan(app:FastAPI):
-    async with async_engine.begin() as conn: #DB 연결 시작
-        await conn.run_sync(Base.metadata.create_all) #alembic migration적용후 삭제필요
-    yield 
-    await async_engine.dispose() #DB 연결 종료
+async def lifespan(app: FastAPI):
+    async with async_engine.begin() as conn:  # DB 연결 시작
+        await conn.run_sync(
+            Base.metadata.create_all
+        )  # alembic migration적용후 삭제필요
+    yield
+    await async_engine.dispose()  # DB 연결 종료
 
-app=FastAPI(lifespan=lifespan)
 
-#라우터 등록
+app = FastAPI(lifespan=lifespan)
+
+# 라우터 등록
 app.include_router(router)
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Caloreat API", "status": "ok"}
 
 
-
-
-#미들웨어 등록 (front:intercept, 토큰보안 안정성)
+# 미들웨어 등록 (front:intercept, 토큰보안 안정성)
 
 # # CORS 설정
 # app.add_middleware(
@@ -46,5 +51,5 @@ app.include_router(router)
 # )
 
 # # for check
-if __name__=="__main__":
-    uvicorn.run("main:app",host="localhost",port=8000,reload=True)
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
