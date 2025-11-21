@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     email : EmailStr                # 이메일 형식 자동 검증
     username : str                  # 아이디 / 닉네임 개념
     
-### request schema
+### Request schema
 # 회원 가입용 스키마
 class UserCreate(UserBase):         # 윗스키마 UserBase 그대로 상속                                    
     password : str                  # 사용자가 입력한 비밀번호 -> password  // 
@@ -27,7 +27,7 @@ class UserUpdate(BaseModel):
     # email_verified : Optional[bool] = None # 이메일 인증 여부 선택입력 -> None이면 미변경 상태 -> 시스템에서 변경할 값
 
 
-# 응답용(response) 스키마 
+# Response schema
 # -> 결합도가 높음 : front_ui, db테이블구조, 기능으로  응답스키마를 3개로 분리
 
 #회원가입 (User)
@@ -47,7 +47,7 @@ class UserRead(UserInDB):
 class UserProfile():
     pass
 # user_health_condition (allergic, diabetes .. )
-# UserHealth / HealthCondition / MedicalCondition 작업전 이름확정()
+# UserHealth / HealthCondition / MedicalCondition ㄴㄴ 니맘대로
 class UserHealth():
     pass
 

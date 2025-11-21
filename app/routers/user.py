@@ -5,7 +5,8 @@ from app.db.schemas.user import UserRead, UserCreate, UserUpdate
 from app.db.database import get_db
 from app.db.models.user import User
 from app.services.user import UserService
-from app.db.crud.user import UserCrud
+
+
 from app.core.auth import oauth2_scheme
 from app.core.auth import set_auth_cookies
 
