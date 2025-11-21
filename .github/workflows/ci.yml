@@ -1,4 +1,4 @@
-name: Caloreat CI
+name: Caloreat Backend CI
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
-        run: uv sync
+        run: uv pip install -r requirements.txt
 
       # 테스트 실행 (환경변수를 서비스 컨테이너 설정에 맞춤)
       - name: Run Tests
