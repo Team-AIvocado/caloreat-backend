@@ -5,15 +5,15 @@ from app.db.models.user import User
 from app.db.crud.user import UserCrud
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.core.jwt_context import get_pwd_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+# from app.core.jwt_context import get_pwd_hash
 
 from datetime import datetime
 from app.db.crud import user as user_crud
 
-
+# Service = Business Logic
 
 class UserService:
     # email로 유저 조회
@@ -48,7 +48,8 @@ class UserService:
         
 
         # hashed_pw = get_pwd_hash(password)
-        hashed_pw = get_pwd_hash(password)
+        # hashed_pw = get_pwd_hash(password)
+        hashed_pw = password #일단 임시로
         return await UserCrud.create_user(db, username=username, email=email, password=hashed_pw)
 
 

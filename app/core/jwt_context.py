@@ -8,8 +8,8 @@ import uuid
 pwd_context=CryptContext(schemes=["bcrypt"])
 
 #해시값 저장
-async def get_pwd_hash(password:str):
-    return pwd_context.hash(password)
+# async def get_pwd_hash(password:str):
+#     return pwd_context.hash(password)
 
 #verify password
 async def verify_pwd(plain_password:str, hashed_pasword:str):

@@ -42,6 +42,7 @@ class UserInDB(BaseModel):
 class UserRead(UserInDB):
     pass
 
+# ===============================================================
 # Profile
 class UserProfile():
     pass
