@@ -12,11 +12,12 @@ class UserCrud:
     # crud에선 flush()까지 관리
 
     # create
+    @staticmethod
     async def create_user(db: AsyncSession, user: UserCreate) -> User:
         db_user = User(**user.model_dump())
         db.add(db_user)
-        await db.flush()  # PK 생성 DB내 autoincrement
-        await db.commit()  # transactino 확정필요
+        await db.flush()  # PK생성, DB내 query insert
+        await db.refresh(db_user)  # 새로입력된값을 다시 반환위해
         return db_user
         # refresh는 SELECT를 다시 쏘는 비용이 들어간다 → 오버헤드발생
 
@@ -42,6 +43,7 @@ class UserCrud:
         return result.scalar_one_or_none()
 
     # 모든유저 조회
+    @staticmethod
     async def get_all_user(db: AsyncSession) -> List[User]:
         result = await db.execute(select(User))
         return result.scalars().all()

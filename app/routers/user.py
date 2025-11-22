@@ -18,6 +18,7 @@ from typing import Annotated, List
 router = APIRouter(prefix="/users", tags=["User"])
 
 
+# 회원가입 - JWT 로그인 - /me 인증확인 - 수정 - 삭제 - 중복체크
 # signup
 @router.post("/signup", response_model=UserRead)
 async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
@@ -27,14 +28,15 @@ async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     return db_user
 
 
-# #회원정보조회
-# @router.get("/name/{user_id}", response_model=UserRead)
-# async def get_name(user_id:int, db:AsyncSession=Depends(get_db)) ->User:
-#     user = await UserCrud.get_id(user_id,db)
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-#                             detail="없는 회원")
-#     return user
+# 회원정보조회
+@router.get("/name/{user_id}", response_model=UserRead)
+async def get_name(user_id: int, db: AsyncSession = Depends(get_db)) -> User:
+    user = await UserCrud.get_id(user_id, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="없는 회원")
+    return user
+
+
 # # # delete_user
 # @router.delete("/delete/{user_id}")
 # async def delete_user(user_id:int,

@@ -7,13 +7,14 @@ import uuid
 # bcrypt -> HASH
 pwd_context = CryptContext(schemes=["bcrypt"])
 
-# 해시값 저장
-# async def get_pwd_hash(password:str):
-#     return pwd_context.hash(password)
+
+# 해시값 저장 async 필요x
+def get_pwd_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
 
 # verify password
-async def verify_pwd(plain_password: str, hashed_pasword: str):
+def verify_pwd(plain_password: str, hashed_pasword: str):
     return pwd_context.verify(plain_password, hashed_pasword)
 
 

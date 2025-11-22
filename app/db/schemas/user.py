@@ -39,9 +39,9 @@ class UserUpdate(BaseModel):
 
 
 # 회원가입 (User)
-class UserInDB(BaseModel):
+class UserInDB(UserBase):
     id: int  # = Field(..., alias="id")          # 유저의 고유 ID(PK), 유저 식별용으로 필수 -> API 응답 전용 이름 user_id로변환
-    # created_at:datetime #= Field(default_factory=lambda : datetime.now(timezone.utc))  #db읽어서 클라이언트 반환
+    created_at: datetime  # = Field(default_factory=lambda : datetime.now(timezone.utc))  #db읽어서 클라이언트 반환
     # provider : str                      # 유저의 가입경로, 로그인 방식 구분용 social 로그인 구현후 활성화
 
     class Config:
@@ -61,7 +61,7 @@ class UserProfile:
 
 # user_health_condition (allergic, diabetes .. )
 # HealthCondition
-class HealthCondition:
+class UserCondition:
     pass
 
 
