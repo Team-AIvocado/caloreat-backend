@@ -10,7 +10,7 @@ anyio==4.11.0
     # via starlette
 asyncpg==0.30.0
     # via backend (pyproject.toml)
-bcrypt==5.0.0
+bcrypt==4.0.1   #5.0.0 -> 4.0.1
     # via backend (pyproject.toml)
 cffi==2.0.0
     # via cryptography
@@ -32,7 +32,7 @@ hyperframe==6.1.0
     # via h2
 idna==3.11
     # via anyio
-jwt==1.4.0    # PyJWT==2.8.0 deprecated
+PyJWT==2.10.1    # jwt==1.4.0 deprecated
     # via backend (pyproject.toml)
 passlib==1.7.4
     # via backend (pyproject.toml)
