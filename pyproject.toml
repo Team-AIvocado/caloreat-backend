@@ -10,7 +10,7 @@ dependencies = [
     "annotated-types==0.7.0",
     "anyio==4.11.0",
     "asyncpg==0.30.0", # PostgreSQL async driver
-    "bcrypt==5.0.0",
+    "bcrypt==4.0.1",
     "cffi==2.0.0",
     "click==8.3.1",
     "cryptography==46.0.3",
@@ -21,7 +21,7 @@ dependencies = [
     "hpack==4.1.0",
     "hyperframe==6.1.0",
     "idna==3.11",
-    "jwt==1.4.0",
+    "PyJWT>=2.8,<3.0",
     "passlib==1.7.4",
     "pycparser==2.23",
     "pydantic-core==2.41.5",
