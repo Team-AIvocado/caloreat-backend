@@ -11,6 +11,7 @@ from app.db.schemas.user import (
     LoginResponse,
     LogoutResponse,
     PasswordUpdate,
+    MessageResponse,
 )
 from app.db.database import get_db
 from app.db.models.user import User
@@ -24,6 +25,16 @@ from typing import Annotated, List
 router = APIRouter(prefix="/users", tags=["User"])
 
 # 최대한 restful api설계방식
+
+@router.get("/checkemail",response_model=MessageResponse)
+async def checkemail(email: str, db: AsyncSession = Depends(get_db))->User:
+    existing_email = await UserCrud.get_user_by_email(db, email)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 사용중인 이메일입니다",
+        )
+    return {"message": "사용 가능한 이메일입니다"}
 
 
 # 회원가입 - JWT 로그인 - /me 인증확인 - 수정 - 삭제 - 중복체크

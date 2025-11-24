@@ -108,3 +108,6 @@ class UserCondition:
 # email_verified : bool               # 유저의 이메일 인증 여부, True=인증완료, False=인증실패
 # login_fail_count : int              # 유저의 로그인 실패 횟수, locked_until 설정하는데 쓰임
 # locked_until : Optional[datetime]   # 유저의 계정 잠금 해제 시간, 로그인 실패 횟수 초과 시 일시적으로 잠금
+
+class MessageResponse(BaseModel):
+    message: str
