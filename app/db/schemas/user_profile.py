@@ -10,7 +10,7 @@ from typing import Optional, Annotated
 # request schema
 # UserProfile or UserInfo
 class UserProfileBase(BaseModel):
-    nickname: str
+    # nickname: str
     gender: str
     height: float | None = None
     weight: float | None = None
@@ -23,7 +23,7 @@ class UserProfileCreate(UserProfileBase):
 
 
 class UserProfileUpdate(BaseModel):
-    nickname: str | None = None
+    # nickname: str | None = None
     gender: str | None = None
     height: float | None = None
     weight: float | None = None

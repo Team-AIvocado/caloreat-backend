@@ -31,7 +31,7 @@ router = APIRouter(prefix="/users", tags=["User"])
 @router.post("/signup", response_model=UserRead)
 async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     db_user = await UserService.register_user(
-        db, user.email, user.username, user.password
+        db, user.email, user.username, user.password, user.nickname
     )
     return db_user
 
@@ -50,8 +50,8 @@ async def login(
 
 
 # 사용자 조회 (현재로그인된 사용자 본인 정보조회)
-# get_current_user 의존성 주입
-@router.get("/me", response_model=UserDetailRead, summary="내정보 조회")
+# get_current_user 의존성 주입      #TODO : 나중에 profile+ condition 시 UserDetailRead사용
+@router.get("/me", response_model=UserRead, summary="내정보 조회")
 async def read_me(current_user=Depends(get_current_user)):
     return current_user
 
@@ -66,7 +66,7 @@ async def read_me(current_user=Depends(get_current_user)):
 
 # user update (로그인된 id만 수정가능) endpoint -> /me로 통일(정적세그먼트)
 # /{user_id}임의접근 x -> /me 본인정보만
-@router.patch("/me", response_model=UserDetailRead, summary="내정보 수정")
+@router.patch("/me", response_model=UserRead, summary="내정보 수정")
 async def update_user_by_id(
     user: UserUpdate,
     db: AsyncSession = Depends(get_db),

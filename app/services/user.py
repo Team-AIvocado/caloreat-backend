@@ -12,7 +12,7 @@ from app.core.jwt_context import (
 # from app.core.security import hash_password # security.py 파일 만든뒤 활성화
 from app.db.models.user import User
 from app.db.crud.user import UserCrud
-from app.routers.user import (
+from app.db.schemas.user import (
     PasswordUpdate,
 )  # TODO: 왜 routers로 연결됐는데 정상작동됐는지 체크필요
 
@@ -34,7 +34,7 @@ class UserService:
 
     # create
     @staticmethod
-    async def register_user(db: AsyncSession, email: str, username: str, password: str):
+    async def register_user(db: AsyncSession, email: str, username: str, password: str, nickname: str):
         # 중복 이메일 체크
         existing_email = await UserCrud.get_user_by_email(db, email)
         if existing_email:
@@ -50,10 +50,12 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="이미 사용중인 이름입니다",
             )
+        
+        # TODO : 닉네임 중복처리는 나중에..
 
         # password hasing
-        hashed_pw = get_pwd_hash(password)
-        user_create = UserCreate(email=email, username=username, password=hashed_pw)
+        hashed_pw = get_pwd_hash(password)                                          # nickname입력안하면 username
+        user_create = UserCreate(email=email, username=username, password=hashed_pw,nickname=nickname or username)
 
         # commit / rollback transaction 개별관리
         try:

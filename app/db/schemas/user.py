@@ -10,6 +10,7 @@ from typing import Optional
 class UserBase(BaseModel):
     email: EmailStr
     username: str
+    nickname : str | None = None        # 닉네임 선택입력 -> Null허용
 
 
 ### Request schema
@@ -21,7 +22,8 @@ class UserCreate(UserBase):
 # 회원 정보 수정용 스키마
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None  # mutable?
-    username: Optional[str] = None  # immutable
+    # username: Optional[str] = None  # immutable
+    nickname : str | None = None
 
     # phone삭제
     # 확장(profile,condition으로 뺄지 합칠지 고민필요)
@@ -68,7 +70,7 @@ class UserRead(UserInDB):
 
 
 class UserDetailRead(BaseModel):
-    id: int
+    user_id: int = Field(..., alias="id")
     username: str
     email: str
     created_at: datetime
@@ -100,7 +102,6 @@ class UserCondition:
 
 
 ##### UserProfile / HealthCondition
-# nickname : Optional[str] = None        # 닉네임 선택입력 -> Null허용
 # nickname : Optional[str]            # 유저의 닉네임, 서비스에서 별칭을 따로 줄 수 있다면 사용
 # phone : Optional[str]               # 유저의 전화번호, 선택적으로 제공하지 않아도 됨
 # is_active : bool                    # 유저의 계정 활성 여부, True=정상, False=정지
