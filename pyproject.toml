@@ -3,16 +3,8 @@ name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-<<<<<<< HEAD
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.121.2",
-    "pydantic>=2.12.4",
-    "uvicorn[standard]>=0.38.0",
-=======
-requires-python = ">=3.11"
-dependencies = [
-    "aiomysql==0.3.2", # MySQL async driver (PostgreSQL로 전환이면 제거 가능)
     "annotated-doc==0.0.4",
     "annotated-types==0.7.0",
     "anyio==4.11.0",
@@ -34,7 +26,6 @@ dependencies = [
     "pydantic-core==2.41.5",
     "pydantic-settings==2.12.0",
     "pydantic[email]==2.12.4",
-    "pymysql==1.1.2",
     "python-dotenv==1.2.1",
     "sniffio==1.3.1",
     "sqlalchemy==2.0.44",
@@ -48,5 +39,4 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
     "pytest>=9.0.1",
->>>>>>> dev
 ]

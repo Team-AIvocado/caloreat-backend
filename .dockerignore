@@ -1,7 +1,12 @@
-.DS_Store
+.git
+.gitignore
+.dockerignore
 .venv
 __pycache__
+.pytest_cache
+.idea
 *.pyc
 *.pyo
 *.pyd
-.pytest_cache
+.env.*
+!/.env.docker

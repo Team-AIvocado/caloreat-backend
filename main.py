@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-from fastapi import FastAPI
-import uvicorn
-
-app = FastAPI()
-
-
-@app.get("/")
-def read_root():
-    return {"message": "Hello World"}
-=======
 # from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi import FastAPI
@@ -24,7 +13,6 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=".env")
->>>>>>> dev
 
 
 # lifespan
@@ -66,9 +54,4 @@ def read_root():
 
 # # for check
 if __name__ == "__main__":
-<<<<<<< HEAD
-
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-=======
     uvicorn.run("main:app", host="localhost", port=8000, reload=True)
->>>>>>> dev
