@@ -11,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import func
 from app.db.database import Base
 from datetime import datetime, timezone
+from sqlalchemy.orm import relationship
 
 
 # dabin
@@ -35,13 +36,16 @@ class User(Base):
     password = Column(  # passowrd Query
         String(255), nullable=False  # VARCHAR  # NOT NULL
     )
-    # nickname user_info(front와 이름통일 필요)로 이전 - hyunjun
+    nickname = Column(String(50), nullable=True)
 
     created_at = Column(  # created_at Query
         DateTime(timezone=True),
         nullable=False,  # NOT NULL
         default=lambda: datetime.now(timezone.utc),  # DEFAULT CURRENT_TIMESTAMP ->
     )
+
+    user_profiles = relationship("UserProfile", back_populates="users")
+    user_health_conditions = relationship("HealthCondition", back_populates="users")
 
     # profile, condition에 cascade (orphan data방지) 고려 필요
 

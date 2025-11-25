@@ -12,7 +12,9 @@ from app.core.jwt_context import (
 # from app.core.security import hash_password # security.py 파일 만든뒤 활성화
 from app.db.models.user import User
 from app.db.crud.user import UserCrud
-from app.routers.user import PasswordUpdate
+from app.db.schemas.user import (
+    PasswordUpdate,
+)  # TODO: 왜 routers로 연결됐는데 정상작동됐는지 체크필요
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -32,7 +34,9 @@ class UserService:
 
     # create
     @staticmethod
-    async def register_user(db: AsyncSession, email: str, username: str, password: str):
+    async def register_user(
+        db: AsyncSession, email: str, username: str, password: str, nickname: str
+    ):
         # 중복 이메일 체크
         existing_email = await UserCrud.get_user_by_email(db, email)
         if existing_email:
@@ -49,9 +53,16 @@ class UserService:
                 detail="이미 사용중인 이름입니다",
             )
 
+        # TODO : 닉네임 중복처리는 나중에..
+
         # password hasing
-        hashed_pw = get_pwd_hash(password)
-        user_create = UserCreate(email=email, username=username, password=hashed_pw)
+        hashed_pw = get_pwd_hash(password)  # nickname입력안하면 username
+        user_create = UserCreate(
+            email=email,
+            username=username,
+            password=hashed_pw,
+            nickname=nickname or username,
+        )
 
         # commit / rollback transaction 개별관리
         try:
@@ -167,8 +178,14 @@ class UserService:
         else:
             db_user = await UserCrud.get_user_by_username(db, account)
 
-        if not db_user or not verify_pwd(user.password, db_user.password):
-            raise HTTPException(status_code=401, detail="잘못된 이메일 또는 비밀번호")
+        # 없는 아이디, 이메일
+        if not db_user:
+            raise HTTPException(
+                status_code=400, detail="이메일 또는 아이디를 확인해주세요"
+            )
+        # 비밀번호 불일치 시
+        if not verify_pwd(user.password, db_user.password):
+            raise HTTPException(status_code=401, detail="비밀번호를 확인해주세요")
 
         # token
         access_token = create_access_token(db_user.id)
@@ -176,6 +193,7 @@ class UserService:
 
         return db_user, access_token, refresh_token
 
+        # login
         # # refresh_token rotation 추가시 활성화(미들웨어사용 토큰 자동갱신)
         # updated_user = await UserCrud.update_refresh_token_id(
         #     db, db_user.user_id, refresh_token

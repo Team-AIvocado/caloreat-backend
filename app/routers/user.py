@@ -11,6 +11,7 @@ from app.db.schemas.user import (
     LoginResponse,
     LogoutResponse,
     PasswordUpdate,
+    MessageResponse,
 )
 from app.db.database import get_db
 from app.db.models.user import User
@@ -26,12 +27,34 @@ router = APIRouter(prefix="/users", tags=["User"])
 # 최대한 restful api설계방식
 
 
+@router.get("/checkemail", response_model=MessageResponse)
+async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> User:
+    existing_email = await UserCrud.get_user_by_email(db, email)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 사용중인 이메일입니다",
+        )
+    return {"message": "사용 가능한 이메일입니다"}
+
+
+@router.get("/checkid", response_model=MessageResponse)
+async def checkemail(id: str, db: AsyncSession = Depends(get_db)) -> User:
+    existing_id = await UserCrud.get_user_by_id(db, id)
+    if existing_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 사용중인 아이디입니다",
+        )
+    return {"message": "사용 가능한 아이디입니다"}
+
+
 # 회원가입 - JWT 로그인 - /me 인증확인 - 수정 - 삭제 - 중복체크
 # signup
 @router.post("/signup", response_model=UserRead)
 async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     db_user = await UserService.register_user(
-        db, user.email, user.username, user.password
+        db, user.email, user.username, user.password, user.nickname
     )
     return db_user
 
@@ -50,11 +73,13 @@ async def login(
 
 
 # 사용자 조회 (현재로그인된 사용자 본인 정보조회)
-# get_current_user 의존성 주입
-@router.get("/me", response_model=UserDetailRead, summary="내정보 조회")
+# get_current_user 의존성 주입      #TODO : 나중에 profile+ condition 시 UserDetailRead사용
+@router.get("/me", response_model=UserRead, summary="내정보 조회")
 async def read_me(current_user=Depends(get_current_user)):
     return current_user
 
+
+# current_user-> 쿠키상태유지
 
 # # 모든 사용자조회(관리자용)  : is_admin or username==admin 필요하면 추가
 # # service logic 생성필요
@@ -66,7 +91,7 @@ async def read_me(current_user=Depends(get_current_user)):
 
 # user update (로그인된 id만 수정가능) endpoint -> /me로 통일(정적세그먼트)
 # /{user_id}임의접근 x -> /me 본인정보만
-@router.patch("/me", response_model=UserDetailRead, summary="내정보 수정")
+@router.patch("/me", response_model=UserRead, summary="내정보 수정")
 async def update_user_by_id(
     user: UserUpdate,
     db: AsyncSession = Depends(get_db),

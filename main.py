@@ -1,4 +1,4 @@
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi import FastAPI
 from app.db.database import Base, async_engine
@@ -31,9 +31,6 @@ async def lifespan(app: FastAPI):
 print("SECRET_KEY:", settings.secret_key)
 app = FastAPI(lifespan=lifespan)
 
-# 라우터 등록
-app.include_router(router)
-
 
 @app.get("/")
 def read_root():
@@ -41,17 +38,27 @@ def read_root():
 
 
 # 미들웨어 등록 (front:intercept, 토큰보안 안정성)
+# 허용할 출처 목록
+origins = [
+    "http://localhost:5173",  # React 개발 서버 주소
+    "null",  # 로컬에서 직접 연 html 파일 (test.html)
+]
 
-# # CORS 설정
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  #모든 도메인요청 허용
-#     allow_credentials=True, #자격증명 true일경우에만 응답 노출
-#     allow_methods=["*"], #모든 http메소드 허용 # 소셜인증 사용시 https만 혀용필요할수도있음
-#     allow_headers=["*"],
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    # allow_origins=["*"],  #모든 도메인요청 허용
+    allow_origins=origins,
+    allow_credentials=True, #자격증명 true일경우에만 응답 노출
+    allow_methods=["*"], #모든 http메소드 허용 # 소셜인증 사용시 https만 혀용필요할수도있음
+    allow_headers=["*"],
 
-# )
+)
+
+# 라우터 등록
+app.include_router(router)
+
 
 # # for check
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
