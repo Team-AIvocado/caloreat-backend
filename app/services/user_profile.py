@@ -5,12 +5,14 @@ from app.db.schemas.user_profile import (
     UserProfileCreate,
     UserProfileRead,
     UserProfileUpdate,
+    UserProfileReadtmp,
 )
 from app.db.models.user_profile import UserProfile
 from app.db.crud.user_profile import UserProfileCrud
 
 from enum import Enum
 from datetime import date
+import copy
 
 # 신체정보
 # TODO: 예외처리, null값 처리 -> 최소기능우선
@@ -22,7 +24,13 @@ class UserProfileService:
     # create(input form)                     #속성 -> 객체형태로 단순화(pydantic model:requestbody)
     @staticmethod
     async def create_profile(
-        db: AsyncSession, user_id: int, profile: UserProfileCreate
+        db: AsyncSession,
+        user_id: int,
+        profile: UserProfileCreate,
+        # tmp mock
+        conditions: list[dict],
+        allergies: list[str],
+        # db: AsyncSession, user_id: int, profile: UserProfileCreate)
     ):
         # commit / rollback transaction service에서개별관리
         # DB쓰기작업 transaction rollback 1차안전장치
@@ -38,11 +46,25 @@ class UserProfileService:
         if isinstance(goal_type, Enum):
             dict_profile["goal_type"] = goal_type.value
 
+        tmp_dic_profile = copy.deepcopy(dict_profile)
+
         try:
             db_profile = await UserProfileCrud.create_profile_db(db, dict_profile)
             await db.commit()
             await db.refresh(db_profile)
-            return db_profile
+            ###### mock -----------------
+            # mock reponse를위한작업 임시
+            pyd_profile = UserProfileReadtmp.model_validate(db_profile)
+            dict_profile_tmp = pyd_profile.model_dump()
+            copy_dict_tmp = copy.deepcopy(dict_profile_tmp)
+            response_model = UserProfileRead(
+                **copy_dict_tmp, conditions=conditions, allergies=allergies
+            )
+
+            return response_model
+            ## mock --------------------------
+
+            # return db_profile
 
         except Exception:
             await db.rollback()
@@ -68,12 +90,22 @@ class UserProfileService:
         # db_profile(orm): age(x) -> pydantic -> 복사후 새로운 응답용모델생성
         pydantic_profile = UserProfileRead.model_validate(db_profile)
         #
-        profile_response = pydantic_profile.model_copy(update={"age": age})
+        profile_response = pydantic_profile.model_copy(
+            update={
+                "age": age,
+                "conditions": [
+                    {"condition_code": "blood_pressure", "condition_type": "high"},
+                    {"condition_code": "diabetes", "condition_type": None},
+                ],
+                "allergies": ["egg", "milk"],
+            }
+        )
 
         return profile_response
 
     # update    #UserProfile orm객체
     @staticmethod
+    # async def update_profile(db: AsyncSession, user_id: int, profile: UserProfile):
     async def update_profile(db: AsyncSession, user_id: int, profile: UserProfile):
 
         # patch(요청에서 전달된 필드만 업데이트)

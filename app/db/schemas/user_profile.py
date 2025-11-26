@@ -38,6 +38,8 @@ class UserProfileUpdate(BaseModel):
     height: float | None = None
     weight: float | None = None
     goal_type: str | None = None
+    conditions: list[dict] | None = None
+    allergies: list[str] | None = None
 
 
 # --- response schema ---
@@ -52,4 +54,13 @@ class UserProfileInDB(UserProfileBase):
 
 class UserProfileRead(UserProfileInDB):
     age: int | None = None  # 날짜가지남에따라 나이갱신이안됨 =계산후 주입필요
+    conditions: list[dict] = []
+    allergies: list[str] = []
+    # bmi: float |None = None # 몸무게, 키는 mutable 계산후 반환필요 - 우선 최소기능만
+
+
+class UserProfileReadtmp(UserProfileInDB):
+    age: int | None = None  # 날짜가지남에따라 나이갱신이안됨 =계산후 주입필요
+    conditions: list[dict] = []
+    allergies: list[str] = []
     # bmi: float |None = None # 몸무게, 키는 mutable 계산후 반환필요 - 우선 최소기능만

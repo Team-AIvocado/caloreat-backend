@@ -27,7 +27,7 @@ router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
 # create (userinfo 입력)    #TODO: birthdate 회원가입 이동 논의필요
 @router.post(
     "/",
-    response_model=UserProfileCreate,
+    response_model=UserProfileRead,
     summary="Create:신체정보+목표 입력",
     description="""                
                 goal_type(str): \n
@@ -40,11 +40,15 @@ router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
 )
 async def create_profile_endpoint(
     profile: UserProfileCreate,
+    conditions: list[dict],
+    allergies: list[str],
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     user_id = current_user.id
-    new_profile = await UserProfileService.create_profile(db, user_id, profile)
+    new_profile = await UserProfileService.create_profile(
+        db, user_id, profile, conditions, allergies
+    )
     return new_profile
 
 
@@ -65,6 +69,13 @@ async def update_profile_endpoint(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+
+    # async def update_profile_endpoint(
+    #     profile: UserProfileUpdate,
+    #     current_user: User = Depends(get_current_user),
+    #     db: AsyncSession = Depends(get_db),
+    # ):        # TODO: 로직 구현후 활성화
+
     user_id = current_user.id
     db_profile = await UserProfileService.update_profile(db, user_id, profile)
     return db_profile
