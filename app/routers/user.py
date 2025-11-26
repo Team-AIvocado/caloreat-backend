@@ -39,7 +39,7 @@ async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> User:
 
 
 @router.get("/checkid", response_model=MessageResponse)
-async def checkemail(id: str, db: AsyncSession = Depends(get_db)) -> User:
+async def checkid(id: str, db: AsyncSession = Depends(get_db)) -> User:
     existing_id = await UserCrud.get_user_by_id(db, id)
     if existing_id:
         raise HTTPException(
