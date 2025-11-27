@@ -12,7 +12,7 @@ from typing import Optional, List
 class UserProfileCrud:
     # create
     @staticmethod
-    async def create_profile_db(db: AsyncSession, profile: UserProfileCreate):
+    async def create_profile_db(db: AsyncSession, profile: dict):
 
         # model_dump (pytdantic-> dict) : service로이동(user_id필드 추가)
         db_profile = UserProfile(**profile)
@@ -45,3 +45,7 @@ class UserProfileCrud:
         return db_profile
 
     # delete 필요 x : 유저삭제시에만 프로필 삭제됨  1:1 cascade
+    # admin 권한 + page 구현시 추가
+    # @staticmethod
+    # async def delete_profile_db():
+    #     pass

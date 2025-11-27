@@ -11,7 +11,7 @@ from enum import Enum
 
 # base
 class HealthConditionBase(BaseModel):
-    conditions: list[str]
+    conditions: list[str] | None = None
 
 
 # condition_type: str | None = None
@@ -24,20 +24,21 @@ class HealthConditionBase(BaseModel):
 
 
 # create
-class HealthConditionCreate(BaseModel):
-    conditions: list[str] | None = None
+class HealthConditionCreate(HealthConditionBase):
+    pass
 
 
 # update
-class HealthConditionUpdate(BaseModel):
+class HealthConditionUpdate(HealthConditionCreate):
     pass
 
 
 # response
 # read
-class HealthConditionInDB(BaseModel):
-    id: int  # TODO: alias 적용 condition_id
-    # created_at: datetime  # 기간별 상태변화 추적
+class HealthConditionInDB(HealthConditionBase):
+    condition_id: int = Field(..., alias="id")  # alias 적용 condition_id
+
+    # created_at: datetime  # 기간별 상태변화 추적필요하면 활성화
     pass
     # updated_at:
 
