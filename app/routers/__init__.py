@@ -4,12 +4,15 @@ from . import user
 from . import user_profile
 from . import user_health_condition
 
+# from . import user_allergy
+
 
 router = APIRouter()
 
 router.include_router(user.router)
 router.include_router(user_profile.router)
 router.include_router(user_health_condition.router)
+# router.include_router(user_allergy.router)
 
 
 # 추가 고려 가능

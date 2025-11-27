@@ -11,41 +11,31 @@ from enum import Enum
 
 # base
 class HealthConditionBase(BaseModel):
-    """
-    condition: 중복선택가능
-    임시 condition codes:
-    "high_blood_pressure"
-    "low_blood_pressure"
-    "diabetes"
-    "thyroid_low"
-    "thyroid_high"
-    """
-
     conditions: list[str]
 
-    # condition_type: str | None = None
-    # allergy는 건강유의사항과 속성이다름 -> ㅇ
 
-    # severity: str | None = None
+# condition_type: str | None = None
+# allergy는 건강유의사항과 속성이다름 -> ㅇ
+# severity: str | None = None
 
 
 # request client가 보내는 필드
-# condition은 optional 필수 생성필드가 아니므로 create의 의미가 x
+# optional임
 
 
 # create
-class HealthConditionCreate(HealthConditionBase):
-    pass
+class HealthConditionCreate(BaseModel):
+    conditions: list[str] | None = None
 
 
 # update
-class HealthConditionUpdate(HealthConditionBase):
+class HealthConditionUpdate(BaseModel):
     pass
 
 
 # response
 # read
-class HealthConditionInDB(HealthConditionBase):
+class HealthConditionInDB(BaseModel):
     id: int  # TODO: alias 적용 condition_id
     # created_at: datetime  # 기간별 상태변화 추적
     pass
