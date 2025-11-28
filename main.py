@@ -20,10 +20,10 @@ load_dotenv(dotenv_path=".env")
 # lifespan != migration(alembic)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with async_engine.begin() as conn:  # DB 연결 시작
-        await conn.run_sync(
-            Base.metadata.create_all
-        )  # alembic migration적용후 삭제필요
+    # async with async_engine.begin() as conn:  # DB 연결 시작
+    #     await conn.run_sync(
+    #         Base.metadata.create_all
+    #     )  # alembic migration적용후 삭제필요
     yield
     await async_engine.dispose()  # DB 연결 종료
 

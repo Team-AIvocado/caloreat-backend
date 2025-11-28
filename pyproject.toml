@@ -33,6 +33,7 @@ dependencies = [
     "typing-extensions==4.15.0",
     "typing-inspection==0.4.2",
     "uvicorn==0.38.0",
+    "alembic>=1.17.2",
 ]
 
 [dependency-groups]
