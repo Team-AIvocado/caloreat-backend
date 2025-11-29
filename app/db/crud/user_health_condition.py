@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from sqlalchemy.engine import CursorResult
+
 from app.db.models.user_health_condition import HealthCondition
 from app.db.schemas.user_health_condition import (
     HealthConditionCreate,
@@ -30,7 +32,7 @@ class HealthConditionCrud:
         )
         return result.scalar_one_or_none()
 
-    # read_all
+    # read & return list
     @staticmethod
     async def get_all_condition_db(db: AsyncSession, user_id: int) -> List[str]:
         result = await db.execute(
@@ -46,12 +48,12 @@ class HealthConditionCrud:
         result = await db.execute(
             select(HealthCondition).where(HealthCondition.user_id == user_id)
         )
-        db_allergy = result.scalar_one_or_none()
+        db_conditions = result.scalar_one_or_none()
 
-        if not db_allergy:
-            raise HTTPException(status_code=404, detail="Not found")
+        if not db_conditions:
+            return False
 
-        await db.delete(db_allergy)
+        await db.delete(db_conditions)
         await db.flush()  # db에 쿼리문날림/ 롤백가능
         return True
 
@@ -69,3 +71,22 @@ class HealthConditionCrud:
         await db.flush()  # PK생성, DB내 query insert
 
         return db_conditions  # orm list 객체 service로 반환
+
+    # get -> profile
+
+    # delete
+    # delete : bulk delete
+    @staticmethod
+    async def delete_all_conditions_db(db: AsyncSession, user_id: int) -> bool:
+        print("input_user_id:", user_id)
+        # orm 생성없이 바로삭제
+        result = await db.execute(
+            delete(HealthCondition).where(HealthCondition.user_id == user_id)
+        )
+        # 커서사용 영향받은 row갯수 추출 :rowcount
+        cursor: CursorResult = result
+        deleted_count = cursor.rowcount
+
+        return deleted_count > 0
+
+    # update 필요x

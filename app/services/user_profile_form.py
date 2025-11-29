@@ -94,3 +94,22 @@ class ProfileFormService:
 
         response_form = ProfileFormRead(**dict_profile)
         return response_form
+
+    # update: 정보수정
+    @staticmethod
+    async def update_profile_form(
+        db: AsyncSession, user_id: int, profile_data: ProfileFormUpdate
+    ):
+        if profile_data.conditions == None:
+            await UserProfileService.update_profile(db, user_id, profile_data)
+            return profile_data
+
+        # condition: [] or conditions:["a"]
+        else:
+            #
+            conditions = profile_data.conditions
+            await UserProfileService.update_profile(db, user_id, profile_data)
+            await HealthConditionService.update_condition_form(db, user_id, conditions)
+
+            # return은 확장용
+            return profile_data

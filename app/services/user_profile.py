@@ -79,7 +79,10 @@ class UserProfileService:
 
     # update    #UserProfile orm객체
     @staticmethod
-    async def update_profile(db: AsyncSession, user_id: int, profile: UserProfile):
+    async def update_profile(db: AsyncSession, user_id: int, profile):
+        """
+        profile : UserProfile
+        """
 
         # patch(요청에서 전달된 필드만 업데이트)
         dict_profile = profile.model_dump(exclude_unset=True)
@@ -113,8 +116,9 @@ class UserProfileService:
 
             return profile_response
 
-        except Exception:
+        except Exception as e:
             await db.rollback()
+            print(f"[SERVICE ERROR][함수명] {e}")
             raise
 
     # -------------------------------------------

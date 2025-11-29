@@ -22,7 +22,7 @@ from app.services.user_profile_form import ProfileFormService
 
 from typing import Annotated, List
 
-router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
+router = APIRouter(prefix="/users/me/profile", tags=["ProfileForm"])
 
 # --- ProfileForm endpoints ---
 # ux고려, 유지보수, 확장성 고려 통합엔드포인트 분리
@@ -57,4 +57,17 @@ async def get_profile_endpoint(
 
 
 # update
-# delete
+@router.patch("/form", response_model=ProfileFormUpdate)
+async def update_profile_endpoint(
+    profile_data: ProfileFormUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    user_id = current_user.id
+    # profile + condition update
+    await ProfileFormService.update_profile_form(db, user_id, profile_data)
+
+    return profile_data
+
+
+# delete admin 활성화시 작성

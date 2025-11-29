@@ -18,6 +18,7 @@ from datetime import date
 
 
 class HealthConditionService:
+    # --- healthcondition 개별 ---
     # create condition
     @staticmethod
     async def create_one_condition(
@@ -55,11 +56,16 @@ class HealthConditionService:
         db_conditions = await HealthConditionCrud.get_all_condition_db(db, user_id)
         return db_conditions
 
+    # update 나중에 단일 엔드포인트시 필요
+
     # delete
     @staticmethod
     async def delete_condition(db: AsyncSession, user_id: int):
         try:
-            await HealthConditionCrud.delete_condition_db(db, user_id)
+            db_conditions = await HealthConditionCrud.delete_condition_db(db, user_id)
+            if not db_conditions:
+                raise HTTPException(status_code=404, detail="Not found")
+
             await db.commit()
             return True
 
@@ -67,14 +73,8 @@ class HealthConditionService:
             await db.rollback()
             raise
 
-    # @staticmethod
-    # async def update_condition(
-    #     db: AsyncSession, user_id: int, conditions: HealthConditionUpdate
-    # ):
-    #     pass
-
     # --------------------------------------------
-    # ProfileForm 함수
+    # ProfileForm CRUD
     # --------------------------------------------
     # create condition bulk (profile 필드추가용)
     @staticmethod
@@ -84,36 +84,66 @@ class HealthConditionService:
         """
         conditions= list[str]
         """
-        print("conditions:", conditions)
-        # conditions input = None이면 db insert 자체를 차단
-        # profile form 에서 넘어온 컨디션 속성 없으면
-        # condition list 쪼개서  user_id 속성 추가 후 -> crud로 넘김
+
+        # condition = None -> db변경없이 종료
         if not conditions:
-            return []  #  input 없을시 빈배열리턴
+            return []
 
         # dict_condition = conditions.model_dump()
         condition_list = conditions
         dict_conditions = [
             {"user_id": user_id, "conditions": con} for con in condition_list
         ]
-        # add user_id from auth context (DB insert용)
-        # dict_condition["user_id"] = user_id
 
         try:
             # db 저장위해 crud로 객체넘김
             db_condition_orm_list = await HealthConditionCrud.create_all_conditions_db(
                 db, dict_conditions
-            )  # type(db_condition_rows)= orm obj list
-
-            # await db.flush()
-            # await db.refresh(db_condition) # bulk insert 에서 refresh-> err
+            )
 
             # response 용 가공 [ormobj] -> list[str]
             condition_str_list = [orm.conditions for orm in db_condition_orm_list]
-            print("condition_service_to_router", type(condition_str_list))
-
-            return condition_str_list  # 새로 쓰기시 db저장 후 list[str]가공 후 리턴 (profile쪽에서 호출)
+            await db.commit()
+            return condition_str_list  # list[str] (profile쪽에서 호출)
 
         except Exception:
+            # db 보호 1차 안전장치
+            await db.rollback()
+            raise
+
+    # read -> 기존 함수 사용(profileform service)
+
+    # update(replace all)
+    @staticmethod
+    async def update_condition_form(
+        db: AsyncSession, user_id: int, conditions: list[str]
+    ):
+
+        # conditions: []
+        if conditions == []:
+            try:
+                await HealthConditionCrud.delete_all_conditions_db(db, user_id)
+                await db.commit()
+                # not use optional / service에서 DTO반환
+                return
+
+            except Exception as e:
+                await db.rollback()
+                print(f"[SERVICE ERROR][함수명] {e}")
+                raise
+
+        # conditions: ["a"]
+        try:
+            await HealthConditionCrud.delete_all_conditions_db(db, user_id)
+            condition_list = conditions
+            dict_conditions = [
+                {"user_id": user_id, "conditions": con} for con in condition_list
+            ]
+            await HealthConditionCrud.create_all_conditions_db(db, dict_conditions)
+            await db.commit()
+            return
+
+        except Exception:
+            # db 보호 1차 안전장치
             await db.rollback()
             raise

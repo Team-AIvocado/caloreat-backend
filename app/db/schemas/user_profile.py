@@ -71,19 +71,18 @@ class ProfileFormBase(BaseModel):
 
 class ProfileFormCreate(ProfileFormBase):
     user_id: int
-    # 특수필드 2개 추가(생성)
+    # 특수필드 추가(생성)
     conditions: list[str] | None = None
-    # allergies: list[str] | None = None
 
 
+# request = response 동시사용
 class ProfileFormUpdate(BaseModel):
-    # nickname: str | None = None
-    # gender: str | None = None # TODO: unrecognized
     height: float | None = None
     weight: float | None = None
     goal_type: str | None = None
     conditions: list[str] | None = None
-    # allergies: list[str] | None = None
+
+    # gender: str | None = None # TODO: unrecognized
 
 
 # --- response schema ---
