@@ -30,6 +30,14 @@ class HealthConditionCrud:
         )
         return result.scalar_one_or_none()
 
+    # read_all
+    @staticmethod
+    async def get_all_condition_db(db: AsyncSession, user_id: int) -> List[str]:
+        result = await db.execute(
+            select(HealthCondition.conditions).where(HealthCondition.user_id == user_id)
+        )
+        return result.scalars().all()
+
     # delete {user_id}
     @staticmethod
     async def delete_condition_db(db: AsyncSession, user_id: int) -> bool:

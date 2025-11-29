@@ -55,7 +55,7 @@ class UserProfileService:
 
     # read
     @staticmethod
-    async def get_profile(db: AsyncSession, user_id: str):
+    async def get_profile(db: AsyncSession, user_id: int):
         db_profile = await UserProfileCrud.get_profile_db(db, user_id)
         if not db_profile:
             raise HTTPException(

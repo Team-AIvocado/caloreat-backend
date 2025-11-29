@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.auth import (
-    get_current_user,
-    get_user_id,
-)  # get_user_id는 왠만하면 x DB중복조회 등
+from app.core.auth import get_current_user
 
 from app.db.database import get_db
 from app.db.models.user import User
@@ -13,37 +10,27 @@ from app.db.schemas.user_profile import (
     UserProfileCreate,
     UserProfileRead,
     UserProfileUpdate,
-    ProfileFormCreate,
-    ProfileFormRead,
-    ProfileFormUpdate,
 )
 
 from app.services.user import UserService
 from app.services.user_profile import UserProfileService
-from app.services.user_profile_form import ProfileFormService
-
 
 from typing import Annotated, List
 
-# URL path 언더스코어 금지원칙 user_profile -> user-profile
+# URL path 언더스코어 금지원칙 user_profile -> user-profile -> profile
 router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
 
-
+# TODO: db, current_user deps wrapping 정리(가독성)
 # --- profile 단일조회 ---
 
 
-# create (userinfo 입력)    #TODO: birthdate 회원가입 이동 논의필요
+# create (userinfo 입력)
 @router.post(
     "/",
     response_model=UserProfileCreate,
     summary="Create:신체정보+목표 입력",
     description="""                
-                goal_type(str): \n
-                - 'loss':체중 감량 \n
-                - 'maintain':체중 유지 \n
-                - 'gain' : 증량 \n
-                
-                birthdate(date): 나이계산용, 회원가입이동필요?             
+          프로필 단일생성, conditions(질병,조건) 미포함
              """,
 )
 async def create_profile_endpoint(
@@ -78,28 +65,4 @@ async def update_profile_endpoint(
     return db_profile
 
 
-# delete - profile, condition은 oncascade / admin 추가시 구현
-
-
-# --- ProfileForm endpoints ---
-# create
-@router.post(
-    "/form",
-    response_model=ProfileFormCreate,
-    summary="Create:condition field 포함 프로필생성",
-)
-async def create_profile_endpoint(
-    profile_form: ProfileFormCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    user_id = current_user.id
-    new_profile = await ProfileFormService.create_profile_form(
-        db, user_id, profile_form
-    )
-    return new_profile
-
-
-# get
-# update
-# delete
+# delete - profile은 oncascade delte/ TODO: admin 추가시 구현

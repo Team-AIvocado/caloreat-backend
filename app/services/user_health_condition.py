@@ -9,7 +9,7 @@ from app.db.schemas.user_health_condition import (
 from app.db.models.user import User
 from app.db.models.user_health_condition import HealthCondition
 from app.db.crud.user_health_condition import HealthConditionCrud
-
+from typing import List
 from enum import Enum
 from datetime import date
 
@@ -50,6 +50,12 @@ class HealthConditionService:
 
         return db_condition
 
+    # read_all_conditions
+    async def get_all_conditions(db: AsyncSession, user_id: int) -> List[str]:
+        db_conditions = await HealthConditionCrud.get_all_condition_db(db, user_id)
+        return db_conditions
+
+    # delete
     @staticmethod
     async def delete_condition(db: AsyncSession, user_id: int):
         try:

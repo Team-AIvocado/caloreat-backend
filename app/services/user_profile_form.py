@@ -2,17 +2,16 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.schemas.user_profile import (
-    UserProfileCreate,
-    UserProfileRead,
-    UserProfileUpdate,
     ProfileFormUpdate,
     ProfileFormCreate,
     ProfileFormRead,
 )
 from app.db.models.user_profile import UserProfile
+from app.db.models.user_health_condition import HealthCondition
 from app.db.crud.user_profile import UserProfileCrud
 
 from app.services.user_health_condition import HealthConditionService
+from app.services.user_profile import UserProfileService
 
 # from app.services.user_allergy import AllergyService
 
@@ -28,7 +27,7 @@ class ProfileFormService:
     @staticmethod
     def make_profile_dict(user_id: int, profile_form: ProfileFormCreate) -> dict:
         """
-        칼럼추가를위한 dict작업 함수
+        칼럼추가를위한 dict작업 함수 , ./ line 31
         """
         # conditions칼럼제외  pop() << model_dump(exclude={"conditions"})
         dict_form = profile_form.model_dump(exclude={"conditions"})
@@ -43,13 +42,13 @@ class ProfileFormService:
     @staticmethod
     def make_response_model(db_profile, conditions):
         """
-        db_profile: orm -> return copied pydantic response model
+        db_profile: orm -> return copied pydantic response model ./ line46
         """
         pydantic_profile = ProfileFormRead.model_validate(db_profile)
-        response__profile = pydantic_profile.model_copy(
+        response_profile = pydantic_profile.model_copy(
             update={"conditions": conditions}
         )
-        return response__profile
+        return response_profile
 
     # -------------------------------------
     # CRUD
@@ -69,14 +68,29 @@ class ProfileFormService:
 
         try:
             db_profile = await UserProfileCrud.create_profile_db(db, dict_profile)
-            response__profileform = ProfileFormService.make_response_model(
+            response_profileform = ProfileFormService.make_response_model(
                 db_profile, conditions
             )
 
             await db.commit()
             await db.refresh(db_profile)
-            return response__profileform
+            return response_profileform
 
         except Exception:
             await db.rollback()
             raise
+
+    # read: add conditions
+    @staticmethod
+    async def read_profile_form(db: AsyncSession, user_id: int):
+        db_profile = await UserProfileService.get_profile(db, user_id)  # pydantic
+        conditions = await HealthConditionService.get_all_conditions(
+            db, user_id
+        )  # list[str]
+
+        # profile pydantic-> dict
+        dict_profile = db_profile.model_dump()
+        dict_profile["conditions"] = conditions
+
+        response_form = ProfileFormRead(**dict_profile)
+        return response_form

@@ -7,7 +7,7 @@ from app.db.database import Base
 class HealthCondition(Base):
     __tablename__ = "user_health_conditions"
     id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, unique=True)
+    user_id = Column(BigInteger, unique=False)
 
     # conditions = Column(JSON, nullable=True)
     conditions = Column(String(100), nullable=True)  # TODO: 이후 AI 연결후 정규화
