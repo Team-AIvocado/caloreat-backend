@@ -40,7 +40,9 @@ async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> User:
 
 @router.get("/checkid", response_model=MessageResponse)
 async def checkid(id: str, db: AsyncSession = Depends(get_db)) -> User:
-    existing_id = await UserCrud.get_user_by_id(db, id)
+    existing_id = await UserCrud.get_user_by_id(
+        db, id
+    )  # TODO: 체크후 username으로 변경필요
     if existing_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -73,7 +75,7 @@ async def login(
 
 
 # 사용자 조회 (현재로그인된 사용자 본인 정보조회)
-# get_current_user 의존성 주입      #TODO : 나중에 profile+ condition 시 UserDetailRead사용
+# get_current_user 의존성 주입
 @router.get("/me", response_model=UserRead, summary="내정보 조회")
 async def read_me(current_user=Depends(get_current_user)):
     return current_user

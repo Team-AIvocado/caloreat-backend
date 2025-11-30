@@ -21,6 +21,7 @@ from typing import Annotated, List
 router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
 
 # TODO: db, current_user deps wrapping 정리(가독성)
+
 # --- profile 단일조회 ---
 
 
