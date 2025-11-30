@@ -84,6 +84,7 @@ class HealthConditionService:
         """
         conditions= list[str]
         """
+        print("user_id:", user_id)
 
         # condition = None -> db변경없이 종료
         if not conditions:

@@ -15,12 +15,10 @@ class GoalType(str, Enum):
     loss = "loss"
     maintain = "maintain"
     gain = "gain"
-    # TODO: healthcare 추가여부
 
 
 # UserProfile(UserInfo)
 class UserProfileBase(BaseModel):
-    # nickname: str
     gender: str  #  male ,  female
     birthdate: date | None = None  # immutable / age = mutable
     height: float | None = None
@@ -29,15 +27,15 @@ class UserProfileBase(BaseModel):
 
 
 class UserProfileCreate(UserProfileBase):
-    user_id: int
+    pass
 
 
 class UserProfileUpdate(BaseModel):
-    # nickname: str | None = None
-    # gender: str | None = None # TODO: 성별은 수정하면안됨?(성전환고려?...)
     height: float | None = None
     weight: float | None = None
     goal_type: str | None = None
+
+    # gender: str | None = None # TODO: 성별은 수정하면안됨?(성전환고려?...)
 
 
 # --- response schema ---
@@ -70,7 +68,7 @@ class ProfileFormBase(BaseModel):
 
 
 class ProfileFormCreate(ProfileFormBase):
-    user_id: int
+    # user_id: int
     # 특수필드 추가(생성)
     conditions: list[str] | None = None
 
@@ -104,8 +102,8 @@ class ProfileFormResponse(ProfileFormInDB):
 class ProfileFormRead(ProfileFormInDB):
     age: int | None = None  # 날짜가지남에따라 나이갱신이안됨 =계산후 주입필요
     conditions: list[str] = Field(default_factory=list)
-    # profile_id: int = Field(..., alias="id") # front 요청시 활성화, conditions로직 수정도 필요
 
     # optional
+    # profile_id: int = Field(..., alias="id") # front 요청시 활성화, conditions로직 수정도 필요
     # allergies: list[str] = Field(default_factory=list)
     # bmi: float |None = None # 몸무게, 키는 mutable 계산후 반환필요 - 우선 최소기능만
