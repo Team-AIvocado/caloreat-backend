@@ -26,6 +26,7 @@ router = APIRouter(prefix="/users/me/profile", tags=["ProfileForm"])
 
 # --- ProfileForm endpoints ---
 # ux고려, 유지보수, 확장성 고려 통합엔드포인트 분리
+# profile_form = not restful
 
 
 # create

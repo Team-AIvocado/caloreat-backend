@@ -9,8 +9,7 @@ class HealthCondition(Base):
     id = Column(BigInteger, primary_key=True)
     user_id = Column(BigInteger, unique=False)
 
-    # conditions = Column(JSON, nullable=True)
-    conditions = Column(String(100), nullable=True)  # TODO: 이후 AI 연결후 정규화
+    conditions = Column(String(100), nullable=True)
 
     users = relationship("User", back_populates="user_health_conditions")
 
@@ -18,6 +17,7 @@ class HealthCondition(Base):
         ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
     )
 
+    # conditions = Column(JSON, nullable=True)  # # TODO: 이후 AI 연결후 정규화
     # condition_type = Column(String(50), nullable=True)  # disease, allergy, ..
     # severity = Column(String(10), nullable=True)  # low/ medium / high
     # activity_level = Column(Integer, nullable=True) # 운동량(하루활동량)

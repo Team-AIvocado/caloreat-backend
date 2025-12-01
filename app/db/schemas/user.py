@@ -25,13 +25,10 @@ class UserUpdate(BaseModel):
     # username: Optional[str] = None  # immutable
     nickname: str | None = None
 
-    # phone삭제
-    # 확장(profile,condition으로 뺄지 합칠지 고민필요)
     # provider: str = "local"       # 가입경로 선택입력 -> 기본값 이미 DB에 있음
     # is_activate : Optional[bool] = None    # 활성화 여부 선택입력 -> None이면 미변경 상태 -> 수정만 허용
     # email_verified : Optional[bool] = None # 이메일 인증 여부 선택입력 -> None이면 미변경 상태 -> 시스템에서 변경할 값
-
-    # is_deleted: bool = False
+    # is_deleted: bool = False # TODO: soft delete
 
 
 # front request body 검증용
@@ -74,10 +71,6 @@ class UserDetailRead(BaseModel):
     username: str
     email: str
     created_at: datetime
-    # height: float | None  // profile, condition 기능 추가후 생성
-    # weight: float | None
-    # diabetes: bool | None
-    # 등 필요한 것만 선택적으로 추가
 
 
 # 로그인 반환 (쿠키방식이라 토큰 필요 x)
@@ -101,14 +94,12 @@ class UserCondition:
     pass
 
 
-##### UserProfile / HealthCondition
-# nickname : Optional[str]            # 유저의 닉네임, 서비스에서 별칭을 따로 줄 수 있다면 사용
-# phone : Optional[str]               # 유저의 전화번호, 선택적으로 제공하지 않아도 됨
+class MessageResponse(BaseModel):
+    message: str
+
+
+# # Optional
 # is_active : bool                    # 유저의 계정 활성 여부, True=정상, False=정지
 # email_verified : bool               # 유저의 이메일 인증 여부, True=인증완료, False=인증실패
 # login_fail_count : int              # 유저의 로그인 실패 횟수, locked_until 설정하는데 쓰임
 # locked_until : Optional[datetime]   # 유저의 계정 잠금 해제 시간, 로그인 실패 횟수 초과 시 일시적으로 잠금
-
-
-class MessageResponse(BaseModel):
-    message: str
