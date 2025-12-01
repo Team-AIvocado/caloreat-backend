@@ -1,10 +1,10 @@
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from app.db.database import Base, async_engine
 from app.db import models
-from app.routers import router
 from app.core.settings import settings
+from app.routers import router as all_routes
 
 # lifespan
 from contextlib import asynccontextmanager
@@ -20,10 +20,10 @@ load_dotenv(dotenv_path=".env")
 # lifespan != migration(alembic)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with async_engine.begin() as conn:  # DB 연결 시작
-        await conn.run_sync(
-            Base.metadata.create_all
-        )  # alembic migration적용후 삭제필요
+    # async with async_engine.begin() as conn:  # DB 연결 시작
+    #     await conn.run_sync(
+    #         Base.metadata.create_all
+    #     )  # alembic migration적용후 삭제필요
     yield
     await async_engine.dispose()  # DB 연결 종료
 
@@ -49,14 +49,23 @@ app.add_middleware(
     CORSMiddleware,
     # allow_origins=["*"],  #모든 도메인요청 허용
     allow_origins=origins,
-    allow_credentials=True, #자격증명 true일경우에만 응답 노출
-    allow_methods=["*"], #모든 http메소드 허용 # 소셜인증 사용시 https만 혀용필요할수도있음
+    allow_credentials=True,  # 자격증명 true일경우에만 응답 노출
+    allow_methods=[
+        "*"
+    ],  # 모든 http메소드 허용 # 소셜인증 사용시 https만 혀용필요할수도있음
     allow_headers=["*"],
-
 )
 
 # 라우터 등록
-app.include_router(router)
+# v1 운영버전
+api_v1 = APIRouter(prefix="/api/v1")
+api_v1.include_router(all_routes)
+app.include_router(api_v1)
+
+# #v2 운영버전 - 호환성깨지면 v2폴더 생성(router~crud)
+# api_v2 = APIRouter(prefix="/api/v2")
+# api_v2.include_router(all_routes)
+# app.include_router(api_v2)
 
 
 # # for check

@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.auth import (
-    get_current_user,
-    get_user_id,
-)  # get_user_id는 왠만하면 x DB중복조회 등
+from app.core.auth import get_current_user
 
 from app.db.database import get_db
 from app.db.models.user import User
@@ -20,22 +17,21 @@ from app.services.user_profile import UserProfileService
 
 from typing import Annotated, List
 
-# URL path 언더스코어 금지원칙 user_profile -> user-profile
+# URL path 언더스코어 금지원칙 user_profile -> user-profile -> profile
 router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])
 
+# TODO: db, current_user deps wrapping 정리(가독성)
 
-# create (userinfo 입력)    #TODO: birthdate 회원가입 이동 논의필요
+# --- profile 단일조회 ---
+
+
+# create (userinfo 입력)
 @router.post(
     "/",
     response_model=UserProfileCreate,
     summary="Create:신체정보+목표 입력",
     description="""                
-                goal_type(str): \n
-                - 'loss':체중 감량 \n
-                - 'maintain':체중 유지 \n
-                - 'gain' : 증량 \n
-                
-                birthdate(date): 나이계산용, 회원가입이동필요?             
+          프로필 단일생성, conditions(질병,조건) 미포함
              """,
 )
 async def create_profile_endpoint(
@@ -70,4 +66,4 @@ async def update_profile_endpoint(
     return db_profile
 
 
-# delete - profile, condition은 oncascade
+# delete - profile은 oncascade delte/ TODO: admin 추가시 구현

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, ForeignKeyConstraint
+from sqlalchemy import Column, BigInteger, String, ForeignKeyConstraint, JSON
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 
@@ -7,11 +7,9 @@ from app.db.database import Base
 class HealthCondition(Base):
     __tablename__ = "user_health_conditions"
     id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, unique=True)
+    user_id = Column(BigInteger, unique=False)
 
-    condition_name = Column(String(100), nullable=True)
-    condition_type = Column(String(50), nullable=True)  # disease, allergy, ..
-    severity = Column(String(10), nullable=True)  # low/ medium / high
+    conditions = Column(String(100), nullable=True)
 
     users = relationship("User", back_populates="user_health_conditions")
 
@@ -19,4 +17,7 @@ class HealthCondition(Base):
         ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
     )
 
+    # conditions = Column(JSON, nullable=True)  # # TODO: 이후 AI 연결후 정규화
+    # condition_type = Column(String(50), nullable=True)  # disease, allergy, ..
+    # severity = Column(String(10), nullable=True)  # low/ medium / high
     # activity_level = Column(Integer, nullable=True) # 운동량(하루활동량)

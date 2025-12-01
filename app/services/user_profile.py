@@ -9,6 +9,11 @@ from app.db.schemas.user_profile import (
 from app.db.models.user_profile import UserProfile
 from app.db.crud.user_profile import UserProfileCrud
 
+from app.services.user_health_condition import HealthConditionService
+
+# from app.services.user_allergy import AllergyService
+
+import copy
 from enum import Enum
 from datetime import date
 
@@ -50,7 +55,7 @@ class UserProfileService:
 
     # read
     @staticmethod
-    async def get_profile(db: AsyncSession, user_id: str):
+    async def get_profile(db: AsyncSession, user_id: int):
         db_profile = await UserProfileCrud.get_profile_db(db, user_id)
         if not db_profile:
             raise HTTPException(
@@ -74,7 +79,10 @@ class UserProfileService:
 
     # update    #UserProfile orm객체
     @staticmethod
-    async def update_profile(db: AsyncSession, user_id: int, profile: UserProfile):
+    async def update_profile(db: AsyncSession, user_id: int, profile):
+        """
+        profile : UserProfile
+        """
 
         # patch(요청에서 전달된 필드만 업데이트)
         dict_profile = profile.model_dump(exclude_unset=True)
@@ -108,6 +116,11 @@ class UserProfileService:
 
             return profile_response
 
-        except Exception:
+        except Exception as e:
             await db.rollback()
+            print(f"[SERVICE ERROR][함수명] {e}")
             raise
+
+    # -------------------------------------------
+    # Profile Form
+    # -------------------------------------------

@@ -74,8 +74,7 @@ class UserCrud:
 
     # login
 
-    # #refresh_token
-    # @staticmethod
+    # #refresh_token    #TODO: rotation 자동갱신적용 vs front intercept
     # async def update_refresh_token(
     #     user_id:int,refresh_token:str, db:AsyncSession) ->User:
     #     db_user = await db.get(User, user_id)
