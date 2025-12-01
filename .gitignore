@@ -178,3 +178,10 @@ pyrightconfig.json
 .uv.lock
 # 맥OS 쓰레기 파일
 .DS_Store 
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
