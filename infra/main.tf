@@ -85,6 +85,25 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Allow creating log groups (required for awslogs-create-group)
+resource "aws_iam_role_policy" "ecs_task_execution_role_logs_policy" {
+  name = "caloreat-ecs-task-execution-role-logs-policy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # ECS Task Role (allows the app to access S3, DB, etc.)
 resource "aws_iam_role" "ecs_task_role" {
   name = "caloreat-ecs-task-role"
