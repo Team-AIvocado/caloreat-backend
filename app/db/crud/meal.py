@@ -8,9 +8,7 @@ from app.db.models.meal import MealImage
 
 # schemas
 from app.db.schemas.meal import (
-    MealImageCreate,
-    MealImageUpdate,
-    MealImageRead,
+    MealImageResponse,
 )
 from typing import Optional, List
 

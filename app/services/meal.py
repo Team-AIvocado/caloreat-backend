@@ -1,10 +1,9 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile, File
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.schemas.meal import (
-    MealImageCreate,
-    MealImageUpdate,
-    MealImageRead,
+    MealImageResponse,
 )
 from app.db.models.user import User
 from app.db.models.meal import MealImage
@@ -17,11 +16,12 @@ from datetime import date
 # Meal Service
 class MealImageService:
     @staticmethod
-    async def create(db, user_id, payload):
-        orm = await MealImageCrud.create(db, user_id, payload)
-        await db.commit()
-        await db.refresh(orm)
-        return orm
+    async def create(db: AsyncSession, user_id: int, file: UploadFile):
+        pass
+        # orm = await MealImageCrud.create(db, user_id, file)
+        # await db.commit()
+        # await db.refresh(orm)
+        # return orm
 
     @staticmethod
     async def get(db, user_id):

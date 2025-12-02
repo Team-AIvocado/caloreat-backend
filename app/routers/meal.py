@@ -1,62 +1,75 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_user_id, get_current_user
+from app.db.models import User
 from app.db.database import get_db
 
 # 스키마
-from app.db.schemas.meal import (
-    MealImageCreate,
-    MealImageUpdate,
-    MealImageRead,
-)
+from app.db.schemas.meal import MealImageResponse
+
+from app.db.schemas.nutrition_analysis import NutrientAnalysisResponse, AnalysisRequest
+
+import io
+
 
 # 서비스
 from app.services.meal import MealImageService
 
 
-router = APIRouter(prefix="/meals", tags=["Meal"])
+router = APIRouter(prefix="/meals/images", tags=["MealImage"])
 
 
-# meal image upload
-@router.post("/upload", response_model=MealImageRead)
-async def upload_image(
-    payload: MealImageCreate,
-    user_id: int = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+# 식단이미지 upload -> #TODO: (back-infer) request classification
+@router.post("/upload", response_model=MealImageResponse)
+async def upload_image_endpoint(
+    # current_user: User = Depends(get_current_user),
+    file: UploadFile = File(None),
 ):
-    return await MealImageService.create(db, user_id, payload)
+    return {
+        "image_url": "https://s3.../uuid.jpg",  # presigned URL
+        "foodname": "된장찌개",  # response.candidates["label"]
+        "candidates": [
+            {"label": "된장찌개", "confidence": 0.93},
+            {"label": "김치찌개", "confidence": 0.72},
+        ],
+    }
 
 
-# @router.post("/", response_model=MealImageOut)
-# async def create_x(
-#     payload: MealImageCreate,
-#     user_id: int = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db),
-# ):
-#     return await XService.create(db, user_id, payload)
+# foodname = front state 값 db 저장x
+
+# 음식이름 수정 (선택된음식이름)
+# 텍스트 입력
+#
 
 
-# @router.get("/", response_model=MealImageOut)
-# async def get_x(
-#     user_id: int = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     return await XService.get(db, user_id)
+# 음식 text 영양소분석
+# 사용자확인 전단계가 존재하므로 confidence는 생략 foodname만 전달
+# 한끼(점심)에 먹는 음식(str)이 여러개임
+# inferserver request는 하나씩 낱개로
+@router.post("/analyze", response_model=NutrientAnalysisResponse)
+async def analyze_image_endpoint(foodnames: AnalysisRequest):
+
+    return {
+        "results": [
+            {
+                "foodname": "된장찌개",
+                "nutrition": {
+                    "calories": 230,
+                    "carbs": 18,
+                },
+            },
+            {
+                "foodname": "김치",
+                "nutrition": {
+                    "calories": 90,
+                    "carbs": 7,
+                },
+            },
+        ]
+    }
 
 
-# @router.patch("/", response_model=MealImageOut)
-# async def update_x(
-#     payload: MealImageUpdate,
-#     user_id: int = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     return await XService.update(db, user_id, payload)
-
-# @router.delete("/")
-# async def delete_x(
-#     user_id: int = Depends(get_current_user),
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     await XService.delete(db, user_id)
-#     return {"message": "deleted"}
+# @router.post("/analyze")
+# async def analyze_image_endpoint()
