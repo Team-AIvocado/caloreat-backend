@@ -185,3 +185,5 @@ pyrightconfig.json
 *.tfstate.backup
 .terraform.lock.hcl
 *.tfvars
+*tfplan
+.terraform.tfstate.lock.info

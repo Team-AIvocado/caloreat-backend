@@ -20,8 +20,19 @@ cd infra
 echo "Initializing Terraform..."
 terraform init
 
+# Prompt for DB Password
+echo -n "Enter Database Password (min 8 chars): "
+read -s DB_PASSWORD
+echo
+
+# Check password length
+if [ ${#DB_PASSWORD} -lt 8 ]; then
+    echo "Error: Password must be at least 8 characters long."
+    exit 1
+fi
+
 echo "Planning Terraform changes..."
-terraform plan -out=tfplan
+terraform plan -var="db_password=$DB_PASSWORD" -out=tfplan
 
 echo "Applying Terraform changes..."
 read -p "Do you want to apply these changes? (y/n) " -n 1 -r

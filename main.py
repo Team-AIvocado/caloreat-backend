@@ -37,10 +37,17 @@ def read_root():
     return {"message": "Welcome to Caloreat API", "status": "ok"}
 
 
+# 배포시 서버가 제대로 살아있나 체크하는 엔드포인트. 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 # 미들웨어 등록 (front:intercept, 토큰보안 안정성)
 # 허용할 출처 목록
 origins = [
     "http://localhost:5173",  # React 개발 서버 주소
+    "https://caloreat-ten.vercel.app",  # Vercel 배포 주소
     "null",  # 로컬에서 직접 연 html 파일 (test.html)
 ]
 
