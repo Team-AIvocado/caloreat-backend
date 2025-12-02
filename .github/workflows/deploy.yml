@@ -1,9 +1,10 @@
 name: Deploy to Amazon ECS
 
 on:
-  push:
-    branches:
-      - aws-test    # 테스트용 <- main 으로 변경 예정
+  workflow_run:
+    workflows: ["Caloreat Backend CI"]
+    types: [completed]
+    branches: [main]
 
 env:
   AWS_REGION: ap-northeast-2                   # AWS 지역 설정 - 서울 = ap-northeast-2
@@ -21,10 +22,13 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     environment: production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
