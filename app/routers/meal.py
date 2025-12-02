@@ -9,7 +9,7 @@ from app.db.database import get_db
 # 스키마
 from app.db.schemas.meal import MealImageResponse
 
-from app.db.schemas.nutrition_analysis import NutrientAnalysisResponse, AnalysisRequest
+from app.db.schemas.nutrition_analysis import NutrientAnalysisResponse, AnalysisRequest, OverrideRequest,OverrideResponse,OverrideTextResponse,OverrideTextRequest
 
 import io
 
@@ -29,7 +29,7 @@ async def upload_image_endpoint(
 ):
     return {
         "image_url": "https://s3.../uuid.jpg",  # presigned URL
-        "foodname": "된장찌개",  # response.candidates["label"]
+        "foodname": "된장찌개",  # response.candidates[0]["label"]
         "candidates": [
             {"label": "된장찌개", "confidence": 0.93},
             {"label": "김치찌개", "confidence": 0.72},
@@ -40,8 +40,20 @@ async def upload_image_endpoint(
 # foodname = front state 값 db 저장x
 
 # 음식이름 수정 (선택된음식이름)
-# 텍스트 입력
-#
+@router.post("/override/image", response_model=OverrideResponse)
+async def override_prediction_endpoint(override_image: OverrideRequest):
+    return OverrideResponse(
+    inference_id=override_image.inference_id,
+    selected_food=override_image.selected_food,
+    status="updated",
+    )
+
+# 텍스트 입력(수동입력) /manual
+@router.post("/override/text", response_model=OverrideTextResponse)
+async def analyze_text(override_text: OverrideTextRequest):
+    return OverrideTextResponse(
+        foodname=override_text.selected_food
+    )
 
 
 # 음식 text 영양소분석
@@ -71,5 +83,3 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
     }
 
 
-# @router.post("/analyze")
-# async def analyze_image_endpoint()
