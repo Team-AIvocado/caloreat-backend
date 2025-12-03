@@ -1,26 +1,19 @@
-from datetime import datetime
-from sqlalchemy import (
-    Column,
-    BigInteger,
-    String,
-    Float,
-    JSON,
-    ForeignKey,
-    DateTime,
-    ForeignKeyConstraint,
+from fastapi import HTTPException, status, UploadFile, File
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.schemas.meal_image import (
+    MealImageResponse,
 )
-from sqlalchemy.orm import relationship
-from app.db.database import Base
+from app.db.models.user import User
+
+# from app.db.models.meal_unused import MealImage
+
+# from app.db.crud.meal_image import MealImageCrud
+from typing import List
+from enum import Enum
+from datetime import date
 
 
-class XModel(Base):
-    __tablename__ = "x_table"
-
-    id = Column(BigInteger, primary_key=True)
-    user_id = Column(BigInteger, unique=False, nullable=True)
-    field1 = Column(String)
-    field2 = Column(BigInteger, nullable=True)
-
-    __table_args__ = (
-        ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-    )
+class MealItemService:
+    pass

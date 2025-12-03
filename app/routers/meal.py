@@ -23,6 +23,7 @@ from app.db.schemas.nutrition_analysis import (
 )
 
 import io
+from datetime import date
 
 # 서비스
 from app.services.meal_image import MealImageService
@@ -106,7 +107,7 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
 
 
 # 식단저장
-@router.post("/log", response_model=MealLogRead)
+@router.post("/log", response_model=MealLogCreate)
 async def create_meal_log_endpoint(
     meal: MealLogCreate,
     user_id: int = Depends(get_current_user),
@@ -115,7 +116,29 @@ async def create_meal_log_endpoint(
     pass
 
 
-# read all
-# read get
-# update patch -> put변경 구현난이도, 구현속도우선 TODO: front 데이터수정전송방식 meal부분 변경전달필요
+# read
+@router.get("/logs", response_model=MealLogRead)
+async def read_meal_log_endpoint(
+    date: date | None = None,
+    user_id: int = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    pass
+
+
+# update patch -> put변경  TODO: front 데이터수정 전송방식 meal부분 변경전달필요
+@router.put("/log/{meal_id}")
+async def update_meal_log_endpoint(
+    foods: list[str],
+    user_id: int = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return {"message": "updated"}
+
+
 # delete delete
+@router.delete("/log/{meal_id}")
+async def delete_meal_log_endpoint(
+    user_id: int = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    return {"message": "deleted"}

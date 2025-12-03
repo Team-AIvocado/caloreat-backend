@@ -9,6 +9,9 @@ from . import user_profile_form
 # Meals
 from . import meal
 
+# Stats
+from . import stats
+
 # from . import user_allergy
 
 
@@ -24,7 +27,10 @@ router.include_router(user_profile_form.router)
 
 # Meals
 router.include_router(meal.router)
+router.include_router(stats.stats_router)
+router.include_router(stats.dashboard_router)
 
+# Stats
 
 # 변경: 도메인만모아서 한 객체로 반환
 __all__ = ["router"]
