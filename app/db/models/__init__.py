@@ -7,4 +7,4 @@ from .user_health_condition import HealthCondition
 
 
 # --- Meals ---
-from .meal import MealImage
+from .meal_unused import MealImage

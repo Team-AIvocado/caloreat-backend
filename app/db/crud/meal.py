@@ -4,10 +4,10 @@ from sqlalchemy import select, delete
 from sqlalchemy.engine import CursorResult
 
 # models
-from app.db.models.meal import MealImage
+from app.db.models.meal_unused import MealImage
 
 # schemas
-from app.db.schemas.meal import (
+from app.db.schemas.meal_image import (
     MealImageResponse,
 )
 from typing import Optional, List

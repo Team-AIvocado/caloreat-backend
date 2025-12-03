@@ -7,18 +7,26 @@ from app.db.models import User
 from app.db.database import get_db
 
 # 스키마
-from app.db.schemas.meal import MealImageResponse
-
-from app.db.schemas.nutrition_analysis import NutrientAnalysisResponse, AnalysisRequest, OverrideRequest,OverrideResponse,OverrideTextResponse,OverrideTextRequest
+from app.db.schemas.meal_image import MealImageResponse
+from app.db.schemas.nutrition_analysis import (
+    NutrientAnalysisResponse,
+    AnalysisRequest,
+    OverrideRequest,
+    OverrideResponse,
+    OverrideTextResponse,
+    OverrideTextRequest,
+)
 
 import io
 
-
 # 서비스
-from app.services.meal import MealImageService
+from app.services.meal_image import MealImageService
 
+# meal domain ux흐름 일치 엔드포인트끼리 묶음
+# meal_log, meal_item, meal_image
+# 이미지업로드 라우터에서 끝 /db저장 x (v1)
 
-router = APIRouter(prefix="/meals/images", tags=["MealImage"])
+router = APIRouter(prefix="/meals/", tags=["MealImage"])
 
 
 # 식단이미지 upload -> #TODO: (back-infer) request classification
@@ -39,21 +47,25 @@ async def upload_image_endpoint(
 
 # foodname = front state 값 db 저장x
 
+
+# --- input ---
+## meal_image Upload / meal_image.py집합
+
+
 # 음식이름 수정 (선택된음식이름)
 @router.post("/override/image", response_model=OverrideResponse)
 async def override_prediction_endpoint(override_image: OverrideRequest):
     return OverrideResponse(
-    inference_id=override_image.inference_id,
-    selected_food=override_image.selected_food,
-    status="updated",
+        inference_id=override_image.inference_id,
+        selected_food=override_image.selected_food,
+        status="updated",
     )
+
 
 # 텍스트 입력(수동입력) /manual
 @router.post("/override/text", response_model=OverrideTextResponse)
 async def analyze_text(override_text: OverrideTextRequest):
-    return OverrideTextResponse(
-        foodname=override_text.selected_food
-    )
+    return OverrideTextResponse(foodname=override_text.selected_food)
 
 
 # 음식 text 영양소분석
@@ -83,3 +95,10 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
     }
 
 
+# ===================================================
+# output & meal_log, item crud
+
+# create
+# read
+# update
+# delete
