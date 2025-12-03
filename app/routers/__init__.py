@@ -12,8 +12,11 @@ from . import meal
 # Stats
 from . import stats
 
-# from . import user_allergy
+# ai
+from . import ai_feedback
 
+
+# from . import user_allergy
 
 router = APIRouter()
 
@@ -24,13 +27,14 @@ router.include_router(user.router)
 router.include_router(user_profile.router)
 router.include_router(user_health_condition.router)
 router.include_router(user_profile_form.router)
-
 # Meals
 router.include_router(meal.router)
+# Stats
 router.include_router(stats.stats_router)
 router.include_router(stats.dashboard_router)
+# AI
+router.include_router(ai_feedback.router)
 
-# Stats
 
 # 변경: 도메인만모아서 한 객체로 반환
 __all__ = ["router"]
