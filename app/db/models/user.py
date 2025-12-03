@@ -46,6 +46,9 @@ class User(Base):
 
     user_profiles = relationship("UserProfile", back_populates="users")
     user_health_conditions = relationship("HealthCondition", back_populates="users")
+
+    meal_logs = relationship("MealLog", back_populates="user")
+
     # user_allergies = relationship("Allergy", back_populates="users")
 
     # profile, condition에 cascade (orphan data방지) 고려 필요

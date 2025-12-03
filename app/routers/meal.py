@@ -8,6 +8,11 @@ from app.db.database import get_db
 
 # 스키마
 from app.db.schemas.meal_image import MealImageResponse
+from app.db.schemas.meal_log import (
+    MealLogUpdate,
+    MealLogRead,
+    MealLogCreate,
+)
 from app.db.schemas.nutrition_analysis import (
     NutrientAnalysisResponse,
     AnalysisRequest,
@@ -26,7 +31,7 @@ from app.services.meal_image import MealImageService
 # meal_log, meal_item, meal_image
 # 이미지업로드 라우터에서 끝 /db저장 x (v1)
 
-router = APIRouter(prefix="/meals/", tags=["MealImage"])
+router = APIRouter(prefix="/meals", tags=["Meal"])
 
 
 # 식단이미지 upload -> #TODO: (back-infer) request classification
@@ -50,6 +55,7 @@ async def upload_image_endpoint(
 
 # --- input ---
 ## meal_image Upload / meal_image.py집합
+# TODO: endpoint authentication 추가 필요 / S3 DDOS 공격 고려
 
 
 # 음식이름 수정 (선택된음식이름)
@@ -98,7 +104,18 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
 # ===================================================
 # output & meal_log, item crud
 
-# create
-# read
-# update
-# delete
+
+# 식단저장
+@router.post("/log", response_model=MealLogRead)
+async def create_meal_log_endpoint(
+    meal: MealLogCreate,
+    user_id: int = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    pass
+
+
+# read all
+# read get
+# update patch -> put변경 구현난이도, 구현속도우선 TODO: front 데이터수정전송방식 meal부분 변경전달필요
+# delete delete

@@ -9,4 +9,4 @@ from .user_health_condition import HealthConditionCrud
 # ---
 
 # Meals
-from .meal import MealImageCrud
+# from .meal_image import MealImageCrud

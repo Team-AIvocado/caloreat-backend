@@ -6,8 +6,10 @@ from app.db.schemas.meal_image import (
     MealImageResponse,
 )
 from app.db.models.user import User
-from app.db.models.meal_unused import MealImage
-from app.db.crud.meal import MealImageCrud
+
+# from app.db.models.meal_unused import MealImage
+
+# from app.db.crud.meal_image import MealImageCrud
 from typing import List
 from enum import Enum
 from datetime import date
@@ -25,17 +27,20 @@ class MealImageService:
 
     @staticmethod
     async def get(db, user_id):
-        orm = await MealImageCrud.get(db, user_id)
-        return orm
+        pass
+        # orm = await MealImageCrud.get(db, user_id)
+        # return orm
 
     @staticmethod
     async def update(db, user_id, payload):
-        orm = await MealImageCrud.update(db, user_id, payload)
-        await db.commit()
-        await db.refresh(orm)
-        return orm
+        pass
+        # orm = await MealImageCrud.update(db, user_id, payload)
+        # await db.commit()
+        # await db.refresh(orm)
+        # return orm
 
     @staticmethod
     async def delete(db, user_id):
-        await MealImageCrud.delete(db, user_id)
-        await db.commit()
+        pass
+        # await MealImageCrud.delete(db, user_id)
+        # await db.commit()
