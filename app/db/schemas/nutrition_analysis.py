@@ -28,7 +28,7 @@ class NutrientAnalysisResponse(BaseModel):
 
 
 # meal.py 로 이전필요
-#### override 수정
+### override 수정
 class OverrideRequest(BaseModel):
     inference_id: str  # tmp 백엔드내 uuid부여 : front 다중음식 상태 식별용
     selected_food: str

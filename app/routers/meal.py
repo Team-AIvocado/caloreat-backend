@@ -7,7 +7,7 @@ from app.db.models import User
 from app.db.database import get_db
 
 # 스키마
-from app.db.schemas.meal_image import MealImageResponse
+from app.db.schemas.meal_image import MealImageResponse, OverrideResponse
 from app.db.schemas.meal_log import (
     MealLogUpdate,
     MealLogRead,
@@ -16,8 +16,6 @@ from app.db.schemas.meal_log import (
 from app.db.schemas.nutrition_analysis import (
     NutrientAnalysisResponse,
     AnalysisRequest,
-    OverrideRequest,
-    OverrideResponse,
     OverrideTextResponse,
     OverrideTextRequest,
 )
@@ -36,14 +34,16 @@ router = APIRouter(prefix="/meals", tags=["Meal"])
 
 
 # 식단이미지 upload -> #TODO: (back-infer) request classification
+# backend 파일 업로드 경로 img -> raw - tmp
+# img 업로드 및 cls 결과
 @router.post("/upload", response_model=MealImageResponse)
 async def upload_image_endpoint(
     # current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
     return {
-        "image_url": "https://s3.../uuid.jpg",  # presigned URL
-        "foodname": "된장찌개",  # response.candidates[0]["label"]
+        "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
+        "food_name": "된장찌개",  # response.candidates[0]["label"]
         "candidates": [
             {"label": "된장찌개", "confidence": 0.93},
             {"label": "김치찌개", "confidence": 0.72},
@@ -59,14 +59,21 @@ async def upload_image_endpoint(
 # TODO: endpoint authentication 추가 필요 / S3 DDOS 공격 고려
 
 
-# 음식이름 수정 (선택된음식이름)
+# 음식이름 수정 (선택된음식이름)  #굳이 필요x 수정상태 여부 확인시에만 필요
 @router.post("/override/image", response_model=OverrideResponse)
-async def override_prediction_endpoint(override_image: OverrideRequest):
-    return OverrideResponse(
-        inference_id=override_image.inference_id,
-        selected_food=override_image.selected_food,
-        status="updated",
-    )
+async def override_prediction_endpoint(
+    # current_user: User = Depends(get_current_user),
+    file: UploadFile = File(None),
+):
+    return {
+        "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
+        "food_name": "된장찌개",  # response.candidates[0]["label"]
+        "candidates": [
+            {"label": "된장찌개", "confidence": 0.93},
+            {"label": "김치찌개", "confidence": 0.72},
+        ],
+        "corrected": True,
+    }
 
 
 # 텍스트 입력(수동입력) /manual
@@ -84,20 +91,8 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
 
     return {
         "results": [
-            {
-                "foodname": "된장찌개",
-                "nutrition": {
-                    "calories": 230,
-                    "carbs": 18,
-                },
-            },
-            {
-                "foodname": "김치",
-                "nutrition": {
-                    "calories": 90,
-                    "carbs": 7,
-                },
-            },
+            {"foodname": "된장찌개", "nutrition": {"calories": 230, "carbs": 18}},
+            {"foodname": "김치", "nutrition": {"calories": 90, "carbs": 7}},
         ]
     }
 
