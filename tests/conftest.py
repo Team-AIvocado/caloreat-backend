@@ -30,7 +30,9 @@ def mock_current_user():
         username="testuser",
         nickname="Test User",
         password="hashedpassword",
-        created_at=datetime.now(timezone.utc) # Added created_at
+        created_at=datetime.now(timezone.utc), # Added created_at
+        is_active=True,
+        email_verified=False
     )
     return user
 

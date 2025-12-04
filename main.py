@@ -45,11 +45,8 @@ def health_check():
 
 # 미들웨어 등록 (front:intercept, 토큰보안 안정성)
 # 허용할 출처 목록
-origins = [
-    "http://localhost:5173",  # React 개발 서버 주소
-    "https://caloreat-ten.vercel.app",  # Vercel 배포 주소
-    "null",  # 로컬에서 직접 연 html 파일 (test.html)
-]
+import os
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,https://caloreat-ten.vercel.app,null").split(",")
 
 # CORS 설정
 app.add_middleware(

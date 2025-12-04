@@ -24,6 +24,9 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None  # mutable?
     # username: Optional[str] = None  # immutable
     nickname: str | None = None
+    phone: str | None = None
+    is_active: bool | None = None
+    email_verified: bool | None = None
 
     # provider: str = "local"       # 가입경로 선택입력 -> 기본값 이미 DB에 있음
     # is_activate : Optional[bool] = None    # 활성화 여부 선택입력 -> None이면 미변경 상태 -> 수정만 허용
@@ -63,7 +66,9 @@ class UserInDB(UserBase):
 
 
 class UserRead(UserInDB):
-    pass
+    phone: str | None = None
+    is_active: bool
+    email_verified: bool | None = None
 
 
 class UserDetailRead(BaseModel):
