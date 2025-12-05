@@ -2,7 +2,7 @@ name: Caloreat Backend CI
 
 on:
   push:
-    branches: ["dev", "ci-environment"]
+    branches: ["dev", "main"]
   pull_request:
     branches: ["dev", "main"]
 
