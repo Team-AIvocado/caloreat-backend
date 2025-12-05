@@ -145,7 +145,7 @@ async def create_meal_log_endpoint(
     }
 
 
-# read
+# read by date/ query
 @router.get("/logs", response_model=list[MealLogRead])
 async def read_meal_log_endpoint(
     date: date | None = None,  # query param
@@ -163,6 +163,7 @@ async def read_meal_log_endpoint(
             "eaten_at": "2025-12-04T12:35:10.000Z",
             "image_urls": [
                 "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/lunch_101.jpg"
+                "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/dinner_101.jpg"
             ],
             "created_at": "2025-12-04T12:40:00.000Z",
             "meal_items": [
@@ -182,6 +183,7 @@ async def read_meal_log_endpoint(
                 },
             ],
         }
+        # image 아이디 필요
     ]
 
 
@@ -202,7 +204,7 @@ async def update_meal_log_endpoint(
     return {"message": "updated"}
 
 
-# delete delete
+# delete / params: none
 @router.delete("/log/{meal_id}")
 async def delete_meal_log_endpoint(
     # user_id: int = Depends(get_current_user),
