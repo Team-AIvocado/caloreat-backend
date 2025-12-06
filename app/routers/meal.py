@@ -38,9 +38,10 @@ router = APIRouter(prefix="/meals", tags=["Meal"])
 # img 업로드 및 cls
 @router.post("/upload", response_model=MealImageResponse)
 async def upload_image_endpoint(
-    # current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
+    # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
     return {
         "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
         "food_name": "된장찌개",  # response.candidates[0]["label"]
@@ -62,9 +63,10 @@ async def upload_image_endpoint(
 # 사진 재촬영 업로드 - 중복업로드방지
 @router.post("/override/image", response_model=OverrideResponse)
 async def override_prediction_endpoint(
-    # current_user: User = Depends(get_current_user),#TODO: 기능확인후 활성화
+    current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
+    # TODO: 사진 분석 임시 API hard coded (Inference or LLM 모듈과 연결되면 수정)
     return {
         "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
         "food_name": "된장찌개",  # response.candidates[0]["label"]
@@ -109,6 +111,7 @@ async def override_text_endpoint(
 @router.post("/analyze", response_model=NutrientAnalysisResponse)
 async def analyze_image_endpoint(foodnames: AnalysisRequest):
 
+    # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
     return {
         "results": [
             {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
@@ -125,13 +128,14 @@ async def analyze_image_endpoint(foodnames: AnalysisRequest):
 @router.post("/log")
 async def create_meal_log_endpoint(
     meal: MealLogCreate,
-    # user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
     create_meal_log_endpoint
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
+    # TODO: 임시 - DB 저장 구현 필요
     return {
         "meal_type": "snack",
         "eaten_at": "2025-12-04T15:09:50.409Z",
@@ -149,13 +153,14 @@ async def create_meal_log_endpoint(
 @router.get("/logs", response_model=list[MealLogRead])
 async def read_meal_log_endpoint(
     date: date | None = None,  # query param
-    # user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
     ?date=2025-12-04
     example request : 2025-12-04
     """
+    # TODO: 임시 - DB query 구현 필요
     return [
         {
             "id": 101,
@@ -191,7 +196,7 @@ async def read_meal_log_endpoint(
 @router.put("/log/{meal_id}")
 async def update_meal_log_endpoint(
     foods: list[str],
-    # user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -201,13 +206,15 @@ async def update_meal_log_endpoint(
     :type foods: list[str]
 
     """
+    # TODO: 임시 - DB update 구현 필요
     return {"message": "updated"}
 
 
 # delete / params: none
 @router.delete("/log/{meal_id}")
 async def delete_meal_log_endpoint(
-    # user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # TODO: 임시 - DB 삭제 구현 필요
     return {"message": "deleted"}
