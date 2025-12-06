@@ -12,13 +12,16 @@ from sqlalchemy.orm import relationship
 from app.db.database import Base
 from datetime import datetime, timezone
 
+# ---------------------------
+# 아침/ 점심 / 저녁
+# ---------------------------
 
 class MealLog(Base):
     __tablename__ = "meal_logs"
 
     id = Column(BigInteger, primary_key=True)
     user_id = Column(BigInteger, unique=False, nullable=False)
-    meal_type = Column(String(30), nullable=False)
+    meal_type = Column(String(30), nullable=False) # 아침/점심/저녁 or 1/2/3 JSON뜯어서 매핑 
     eaten_at = Column(DateTime(timezone=True), nullable=False)  # 유저입력 datetime()
     image_urls = Column(JSON, nullable=True)  # JSON imgurl 통으로저장(식단에대한)
     created_at = Column(

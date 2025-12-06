@@ -12,23 +12,28 @@ from typing import Optional
 # -- request --
 class AnalysisRequest(BaseModel):
     foodnames: list[str]  # kakao pasta 최대칼로리 넘으면 음식추가안됨?
-
+    # 아침 점심 저녁 나눌거면 list[dict]  {meal_type:1(아침), foodname: "김치찌개"}
 
 # Image Response
 # 우선 분석결과 JSON 통으로 저장함 나중에 분리할거임
 # 정규화 안함
 # 테이블 id는 저장 전
 #
-class NutrientAnalysisResponse(BaseModel):
+
+class AnalysisResult(BaseModel):
     foodname: str
-    nutrition: dict  # orm JSON
+    nutritions: dict
+
+class NutrientAnalysisResponse(BaseModel):
+    results: list[AnalysisResult]  # orm JSON # TODO: 정규화? 그런거모름 나중에함
+    # -> 안하는이유 리스트로 받아서 찢어서 나누고 
 
 
 # ====================================
 
 
 # meal.py 로 이전필요
-#### override 수정
+### override 수정
 class OverrideRequest(BaseModel):
     inference_id: str  # tmp 백엔드내 uuid부여 : front 다중음식 상태 식별용
     selected_food: str

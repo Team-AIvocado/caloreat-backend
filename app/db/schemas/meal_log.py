@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 class MealItemBase(BaseModel):
     foodname: str
     quantity: float  # TODO: 음식별 섭취량(1개or g정량단위) 확정필요
-    nutri_data: dict  # calorie+ nutrition
+    nutritions: dict  # calorie+ nutrition
 
     # calorie: float
     # llm응답에 포함되어오는지 백에서 계산해야하는지 알수없음(탄,단,단지->calorie)
@@ -28,7 +28,7 @@ class MealItemCreate(MealItemBase):
 # read
 class MealItemInDB(MealItemBase):
     meal_item_id: int = Field(..., alias="id")
-    meal_log_id: int  # FK
+    meal_log_id: int  # FK (JSON에 존재함)
 
     class Config:
         from_attributes = True
@@ -49,7 +49,6 @@ class MealItemRead(MealItemInDB):
 class MealLogBase(BaseModel):
     meal_type: str  # 아침/ 점심 /저녁
     eaten_at: datetime  # 식사시간 ≠ created_at : db저장시간
-    image_urls: list[str]  # s3 image_url들은 아침,점심,저녁 테이블에
 
 
 # -- request --
@@ -72,6 +71,7 @@ class MealLogUpdate(MealLogBase):
 # --- response ---
 class MealLogInDB(MealLogBase):
     meal_log_id: int = Field(..., alias="id")  # PK
+    image_urls: list[str]  # s3 image_url들은 아침,점심,저녁 테이블에
     created_at: datetime
 
     # user_id: int  body포함 x

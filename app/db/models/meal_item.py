@@ -13,7 +13,9 @@ from app.db.database import Base
 from datetime import datetime, timezone
 
 
-# MealItems
+# MealItems : 하루에 먹은 식단(음식)
+
+
 # meal_logs / meal_items  1: N
 class MealItem(Base):
     __tablename__ = "meal_items"
@@ -21,7 +23,7 @@ class MealItem(Base):
     id = Column(BigInteger, primary_key=True)
     meal_log_id = Column(BigInteger, nullable=False)
     quantity = Column(Float, nullable=False)
-    nutri_data = Column(JSON, nullable=True)
+    nutiritionsta = Column(JSON, nullable=True)  # 음식이름, 영양소정보 통저장
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
