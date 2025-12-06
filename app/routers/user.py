@@ -28,7 +28,7 @@ router = APIRouter(prefix="/users", tags=["User"])
 
 
 @router.get("/checkemail", response_model=MessageResponse)
-async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> User:
+async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> MessageResponse:
     existing_email = await UserCrud.get_user_by_email(db, email)
     if existing_email:
         raise HTTPException(
@@ -39,7 +39,7 @@ async def checkemail(email: str, db: AsyncSession = Depends(get_db)) -> User:
 
 
 @router.get("/checkid", response_model=MessageResponse)
-async def checkid(id: str, db: AsyncSession = Depends(get_db)) -> User:
+async def checkid(id: str, db: AsyncSession = Depends(get_db)) -> MessageResponse:
     existing_id = await UserCrud.get_user_by_username(db, id)
     if existing_id:
         raise HTTPException(
@@ -95,7 +95,7 @@ async def read_me(current_user=Depends(get_current_user)):
 async def update_user_by_id(
     user: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user_id: User = Depends(get_user_id),  # 현재로그인된 본인정보
+    current_user_id: int = Depends(get_user_id),  # 현재로그인된 본인정보
 ):
     result = await UserService.update_user(db, current_user_id, user)
     return result
