@@ -63,7 +63,7 @@ class UserCrud:
         db_user = await db.get(User, user_id)
         # 실패시 조기종료
         if not db_user:
-            raise HTTPException(status_code=404, detail="없는 회원 입니다")
+            return False
 
         await db.delete(db_user)
         await db.flush()  # db에 쿼리문날림/ 롤백가능

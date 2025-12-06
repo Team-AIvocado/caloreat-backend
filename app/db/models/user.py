@@ -72,22 +72,23 @@ class User(Base):
     # 최소기능구현 후 확장
 
     # phone 초기요구필드엔 없음 -hyunjun
-    # phone = Column(          # phone Query
-    #     String(20),          # VARCHAR
-    #     unique=True          # UNIQUE
-    # )
+    phone = Column(          # phone Query
+        String(20),          # VARCHAR
+        unique=True,          # UNIQUE
+        nullable=True
+    )
 
-    # is_active = Column(      # is_active Query
-    #     Boolean,             # TINYINT(1) (1 -> True, 0 -> False)
-    #     nullable=False,      # NOT NULL
-    #     default=True         # DEFAULT 1 (1 -> True, 0 -> False)
-    # )
+    is_active = Column(      # is_active Query
+        Boolean,             # TINYINT(1) (1 -> True, 0 -> False)
+        nullable=False,      # NOT NULL
+        default=True         # DEFAULT 1 (1 -> True, 0 -> False)
+    )
     # 기초단계 구현 x
-    # email_verified = Column( # email_verified Query
-    #     Boolean,             # TINYINT(1) (1 -> True, 0 -> False)
-    #     nullable=True,      # NOT NULL 차후 활성 -hyunjun
-    #     default=False        # DEFAULT 0 (1 -> True, 0 -> False)
-    # )
+    email_verified = Column( # email_verified Query
+        Boolean,             # TINYINT(1) (1 -> True, 0 -> False)
+        nullable=True,      # NOT NULL 차후 활성 -hyunjun
+        default=False        # DEFAULT 0 (1 -> True, 0 -> False)
+    )
 
     # 기본기능 안정화 후 구현
     # login_fail_count = Column(    # login_fail_count Query

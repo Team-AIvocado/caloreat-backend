@@ -24,12 +24,12 @@ stats_router = APIRouter(prefix="/stats", tags=["Stats"])
 # dashboard
 @dashboard_router.get("/today", response_model=TodaySummary)
 async def get_today_summary_endpoint(
-    user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
-    # return { "total_kcal": 1200, "carbo": 150 }
+    # TODO: 임시 - DB 구현 필요 & log 데이터 확정 필요 Micro Nutrient 부분 DB구조 확정 필요
     # return await StatsService.get_today_summary(db, user_id)
+    return {"total_calorie": 0, "carb": 0, "protein": 0, "fat": 0}
 
 
 # stats
@@ -37,10 +37,15 @@ async def get_today_summary_endpoint(
 @stats_router.get("/day", response_model=DayStatsResponse)
 async def get_day_stats_endpoint(
     date: date,
-    user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    # TODO: 임시 - DB 구현 필요 & 반환 형식 확정 필요
+    return {
+        "date": str(date),
+        "hourly": [],
+        "total": {"calorie": 0, "carb": 0, "protein": 0, "fat": 0},
+    }
 
 
 #     return { "breakfast": 300, "lunch": 500}
@@ -50,9 +55,9 @@ async def get_day_stats_endpoint(
 
 # 주간
 @stats_router.get("/week")
-async def get_month_stats_endpoint(
+async def get_week_stats_endpoint(
     start_date: date,
-    user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     pass
@@ -62,9 +67,16 @@ async def get_month_stats_endpoint(
 # 월간
 @stats_router.get("/month", response_model=MonthStatsResponse)
 async def get_month_stats_endpoint(
+    year: int,  # 년도도 필요 할것 같아서 추가.
     month: int,
-    user_id: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    # TODO: 임시 - DB 구현 필요 & 반환 형식 확정 필요
+    return {
+        "year": year,
+        "month": month,
+        "daily": [],
+        "total": {"calorie": 0, "carb": 0, "protein": 0, "fat": 0},
+    }
     # return { "avg_kcal": 1800, "total_days": 30 }

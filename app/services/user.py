@@ -158,7 +158,10 @@ class UserService:
     @staticmethod
     async def delete_user(db: AsyncSession, user_id: int) -> bool:
         try:
-            await UserCrud.delete_user_by_id(db, user_id)
+            is_deleted = await UserCrud.delete_user_by_id(db, user_id)
+            if not is_deleted:
+                raise HTTPException(status_code=404, detail="없는 회원 입니다")
+            
             await db.commit()
             return True
 
