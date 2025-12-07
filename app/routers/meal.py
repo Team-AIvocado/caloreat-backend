@@ -79,9 +79,12 @@ async def override_prediction_endpoint(
 
 
 # 텍스트 입력(수동입력) # post x -> get
-@router.get("/foods/search")
-async def override_text_endpoint(
-    food: str,  # 사용자가 입력한 텍스트
+# free-text 서비스 품질 박살 (ex. 떡볶이 / 떡복이 / 떡뽂이 / 떡볶기)
+# 사용자 입력 문자열을 믿지말것
+# TODO: 입력해도 안나올시 -> llm에 보내서 음식명 추출한다던지 대안필요
+@router.get("/foods/manual")
+async def search_foods_manual_endpoint(
+    query: str,  # 사용자가 입력한 텍스트
     limit: int = 10,  # 반환 개수
     db: AsyncSession = Depends(get_db),
 ):
@@ -96,7 +99,7 @@ async def override_text_endpoint(
     all_foods = ["된장찌개", "된장국", "김치찌개", "김치볶음밥", "카레", "치킨", "김밥"]
 
     # 필터링
-    results = [f for f in all_foods if food in f][:limit]
+    results = [f for f in all_foods if query in f][:limit]
 
     # 자동완성 리스트 반환
     return {"results": results}
@@ -105,7 +108,8 @@ async def override_text_endpoint(
 # 음식 text 영양소분석
 # 1단계 image detect/cls 에서 선택된 이미지 (아/점/저)
 # 사용자확인 전단계가 존재하므로 confidence는 생략 foodname만 전달
-#
+
+
 # 한끼(점심)에 먹는 음식(str)이 여러개임
 # inferserver request는 하나씩 낱개로
 @router.post("/analyze", response_model=NutrientAnalysisResponse)
