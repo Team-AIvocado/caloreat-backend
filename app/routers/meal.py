@@ -26,6 +26,7 @@ from datetime import date
 # 서비스
 from app.services.meal_image import MealImageService
 from app.services.meal_item import MealItemService
+from app.services.meal_log import MealLogService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
@@ -145,18 +146,21 @@ async def create_meal_log_endpoint(
     create_meal_log_endpoint
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
-    # TODO: 임시 - DB 저장 구현 필요
-    return {
-        "meal_type": "snack",
-        "eaten_at": "2025-12-04T15:09:50.409Z",
-        "meal_items": [
-            {
-                "foodname": "avocado",
-                "quantity": 100,
-                "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
-            }
-        ],
-    }
+    # Service Skeleton 호출
+    return await MealLogService.create_meal_log(db, meal, current_user.id)
+
+    # # TODO: 임시 - DB 저장 구현 필요
+    # return {
+    #     "meal_type": "snack",
+    #     "eaten_at": "2025-12-04T15:09:50.409Z",
+    #     "meal_items": [
+    #         {
+    #             "foodname": "avocado",
+    #             "quantity": 100,
+    #             "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
+    #         }
+    #     ],
+    # }
 
 
 # read by date/ query
