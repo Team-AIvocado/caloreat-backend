@@ -25,6 +25,7 @@ from datetime import date
 
 # 서비스
 from app.services.meal_image import MealImageService
+from app.services.meal_item import MealItemService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
@@ -41,15 +42,18 @@ async def upload_image_endpoint(
     current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
-    # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
-    return {
-        "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
-        "food_name": "된장찌개",  # response.candidates[0]["label"]
-        "candidates": [
-            {"label": "된장찌개", "confidence": 0.93},
-            {"label": "김치찌개", "confidence": 0.72},
-        ],
-    }
+    # Service Skeleton 호출
+    return await MealItemService.image_detection(file, current_user.id)
+
+    # # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
+    # return {
+    #     "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
+    #     "food_name": "된장찌개",  # response.candidates[0]["label"]
+    #     "candidates": [
+    #         {"label": "된장찌개", "confidence": 0.93},
+    #         {"label": "김치찌개", "confidence": 0.72},
+    #     ],
+    # }
 
 
 # foodname = front state 값 db 저장x
@@ -114,14 +118,16 @@ async def search_foods_manual_endpoint(
 # inferserver request는 하나씩 낱개로
 @router.post("/analyze", response_model=NutrientAnalysisResponse)
 async def analyze_image_endpoint(foodnames: AnalysisRequest):
+    # Service Skeleton 호출
+    return await MealItemService.food_analysis(foodnames.foods)
 
-    # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
-    return {
-        "results": [
-            {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
-            {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
-        ]
-    }  # nutiritionsta
+    # # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
+    # return {
+    #     "results": [
+    #         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
+    #         {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
+    #     ]
+    # }  # nutiritionsta
 
 
 # ===================================================

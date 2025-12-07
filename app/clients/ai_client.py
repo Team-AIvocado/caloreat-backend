@@ -18,17 +18,21 @@ class AIClient:
         AI 서버에 이미지를 전송하여 음식 감지 요청
 
         """
-        async with httpx.AsyncClient() as client:
-            files = {"image": ("image.jpg", image_data, "image/jpeg")}
-            data = {"image_id": image_id}
+        try:
+            # 30초 타임아웃시 롤백
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                files = {"image": ("image.jpg", image_data, "image/jpeg")}
+                data = {"image_id": image_id}
 
-            # 실제 연결 시 타임아웃 설정 고려 필요
-            response = await client.post(
-                settings.ai_detection_url, data=data, files=files
-            )
-            # 응답 코드가 200번대가 아닐 경우 예외처리
-            response.raise_for_status()
-            return response.json()
+                # 실제 연결 시 타임아웃 설정 고려 필요
+                response = await client.post(
+                    settings.ai_detection_url, data=data, files=files
+                )
+                # 응답 코드가 200번대가 아닐 경우 예외처리
+                response.raise_for_status()
+                return response.json()
+        except Exception:
+            raise
 
     @staticmethod
     async def request_analysis(foods: List[Dict[str, str]]) -> Dict[str, Any]:
@@ -36,13 +40,16 @@ class AIClient:
         LLM 서버에 감지된 음식들의 영양소 분석을 요청
 
         """
-        async with httpx.AsyncClient() as client:
-            payload = {"foods": foods}
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                payload = {"foods": foods}
 
-            response = await client.post(
-                settings.ai_analysis_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            response.raise_for_status()
-            return response.json()
+                response = await client.post(
+                    settings.ai_analysis_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception:
+            raise
