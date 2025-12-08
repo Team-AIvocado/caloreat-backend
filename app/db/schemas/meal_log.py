@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # MealItems (끼니별 음식 항목)
@@ -30,9 +30,7 @@ class MealItemInDB(MealItemBase):
     meal_item_id: int = Field(..., alias="id")
     meal_log_id: int  # FK (JSON에 존재함)
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True  # 예외발생 안전장치 추가
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)  # 예외발생 안전장치 추가
 
 
 class MealItemRead(MealItemInDB):
@@ -75,9 +73,7 @@ class MealLogInDB(MealLogBase):
     created_at: datetime
 
     # user_id: int  body포함 x
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class MealLogRead(MealLogInDB):

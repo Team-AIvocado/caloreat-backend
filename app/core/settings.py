@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from datetime import timedelta
 
@@ -21,12 +21,12 @@ class Settings(BaseSettings):
         ..., alias="REFRESH_TOKEN_EXPIRE"
     )  # 7일(604800)
 
-    class Config:
-        env_file = ".env.dev"
-        extra = "allow"
-        populate_by_name = True  # alias허용
-        case_sensitive = True  # 대소문자구분
-
+    model_config = SettingsConfigDict(
+        env_file=".env.dev",
+        extra="allow",
+        populate_by_name=True,  # alias허용
+        case_sensitive=True,  # 대소문자구분
+    )
     # mysql기준 -> postgresql 변경예정
     @property
     def tmp_db(self) -> str:
