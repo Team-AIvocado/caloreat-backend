@@ -21,7 +21,6 @@ dependencies = [
     "hyperframe==6.1.0",
     "idna==3.11",
     "pyjwt>=2.8,<3.0",
-    "passlib==1.7.4",
     "pycparser==2.23",
     "pydantic-core==2.41.5",
     "pydantic-settings==2.12.0",

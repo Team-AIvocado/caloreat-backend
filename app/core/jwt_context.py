@@ -1,4 +1,4 @@
-from passlib.context import CryptContext
+import bcrypt
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -7,19 +7,22 @@ from fastapi import HTTPException, status
 from app.core.settings import settings
 import uuid
 
-# passlib:해싱,검증, bcrypt: 내부 알고리즘
-pwd_context = CryptContext(schemes=["bcrypt"])
-
-
 # 1) 비밀번호 해싱
 # 해시값 저장 async 필요x
 def get_pwd_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    # bcrypt.hashpw returns bytes, so decode -> str
+    pwd_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_bytes = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed_bytes.decode('utf-8')
 
 
 # verify password
-def verify_pwd(plain_password: str, hashed_pasword: str):
-    return pwd_context.verify(plain_password, hashed_pasword)
+def verify_pwd(plain_password: str, hashed_password: str) -> bool:
+    pwd_bytes = plain_password.encode('utf-8')
+    # db value is str -> bytes
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(pwd_bytes, hashed_bytes)
 
 
 # --------------------------------
