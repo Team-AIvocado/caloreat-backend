@@ -30,7 +30,7 @@ class HourNutrition(BaseModel):
 
 class DayStatsResponse(BaseModel):
     date: str
-    hourly: List[HourNutrition]  # 시간대별 섭취량
+    hourly: list[HourNutrition]  # 시간대별 섭취량
     total: Macro  # 하루 총합
 
 
@@ -38,5 +38,5 @@ class DayStatsResponse(BaseModel):
 class MonthStatsResponse(BaseModel):
     year: int
     month: int
-    daily: List[Macro]  # 일별 집계
+    daily: list[Macro]  # 일별 집계
     total: Macro  # 월 총합

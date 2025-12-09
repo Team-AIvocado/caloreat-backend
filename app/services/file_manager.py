@@ -22,10 +22,14 @@ class FileManager:
         tmp_dir = "/tmp/caloreat_images"
         os.makedirs(tmp_dir, exist_ok=True)
 
-        # UUID 파일명 생성
-        # 파일 확장자 추출 (없으면 기본값 jpg)
+        # 원본 파일명에서 확장자 추출
         file_ext = file.filename.split(".")[-1] if file.filename else "jpg"
-        filename = f"{uuid.uuid4()}.{file_ext}"
+
+        # 상태유지 이미지 식별자 (UUID)
+        image_id = str(uuid.uuid4())
+
+        # 저장될 파일명 (unique)
+        filename = f"{image_id}.{file_ext}"
         file_path = os.path.join(tmp_dir, filename)
 
         # 파일 저장

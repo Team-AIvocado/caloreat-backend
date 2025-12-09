@@ -44,7 +44,8 @@ async def upload_image_endpoint(
     file: UploadFile = File(None),
 ):
     # Service Skeleton 호출
-    return await MealItemService.image_detection(file, current_user.id)
+    detection_result = await MealImageService.image_detection(file, current_user.id)
+    return detection_result
 
     # # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
     # return {

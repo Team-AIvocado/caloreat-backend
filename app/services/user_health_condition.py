@@ -52,7 +52,7 @@ class HealthConditionService:
         return db_condition
 
     # read_all_conditions
-    async def get_all_conditions(db: AsyncSession, user_id: int) -> List[str]:
+    async def get_all_conditions(db: AsyncSession, user_id: int) -> list[str]:
         db_conditions = await HealthConditionCrud.get_all_condition_db(db, user_id)
         return db_conditions
 
