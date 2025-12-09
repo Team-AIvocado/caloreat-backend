@@ -11,6 +11,7 @@ class FileManager:
     """
 
     @staticmethod
+    # 임시파일저장
     async def save_tmp_image(file: UploadFile) -> str:
         """
         업로드된 파일을 UUID 파일명을 사용하여 임시 경로에 저장
@@ -37,6 +38,7 @@ class FileManager:
             with open(file_path, "wb") as buffer:
                 # shutil 로직: 대용량 파일도 버퍼링을 통해 복사
                 shutil.copyfileobj(file.file, buffer)
+                # TODO: ★★★★★★★ 반드시 기록저장 클릭시 1.s3로직+ 2.tmp cleanup 로직 추가 필요 ★★★
         except Exception as e:
             # 파일 저장 실패 시 에러 처리 (로그 등)
             raise e
@@ -61,3 +63,21 @@ class FileManager:
             print(f"Error deleting file {file_path}: {e}")
             # 필요에 따라 예외를 다시 발생시키지 않고 넘어갈 수 있음
             pass
+
+    @staticmethod
+    async def save_by_bytes(image_data: bytes, filename: str) -> str:
+        """
+        바이트 데이터를 임시 경로에 저장
+        """
+        tmp_dir = "/tmp/caloreat_images"
+        os.makedirs(tmp_dir, exist_ok=True)
+
+        file_path = os.path.join(tmp_dir, filename)
+
+        try:
+            with open(file_path, "wb") as f:
+                f.write(image_data)
+        except Exception as e:
+            raise e
+
+        return file_path
