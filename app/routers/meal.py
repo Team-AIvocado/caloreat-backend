@@ -14,8 +14,10 @@ from app.db.schemas.meal_log import (
     MealLogCreate,
 )
 from app.db.schemas.nutrition_analysis import (
-    NutrientAnalysisResponse,
-    AnalysisRequest,
+    MultiAnalysisResponse,
+    MultiAnalysisRequest,
+    SingleAnalysisRequest,
+    SingleAnalysisResponse,
     OverrideTextResponse,
     OverrideTextRequest,
 )
@@ -111,6 +113,7 @@ async def search_foods_manual_endpoint(
     return {"results": results}
 
 
+# --- back client - llm server ---
 # 음식 text 영양소분석
 # 1단계 image detect/cls 에서 선택된 이미지 (아/점/저)
 # 사용자확인 전단계가 존재하므로 confidence는 생략 foodname만 전달
@@ -118,18 +121,26 @@ async def search_foods_manual_endpoint(
 
 # 한끼(점심)에 먹는 음식(str)이 여러개임
 # inferserver request는 하나씩 낱개로
-@router.post("/analyze", response_model=NutrientAnalysisResponse)
-async def analyze_image_endpoint(foodnames: AnalysisRequest):
-    # Service Skeleton 호출
-    return await MealItemService.food_analysis(foodnames.foods)
+# # TODO: DB 검색 & 없는경우 LLM Module 호출
 
-    # # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
-    # return {
-    #     "results": [
-    #         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
-    #         {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
-    #     ]
-    # }  # nutiritionsta
+
+@router.post("/analyze/single", response_model=SingleAnalysisResponse)
+async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
+    # Service Skeleton 호출 (Single)
+    return await MealItemService.one_food_analysis(request.foodname)
+
+
+# # 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
+# @router.post("/analyze", response_model=MultiAnalysisResponse)
+# async def analyze_nutrition_endpoint(request: MultiAnalysisRequest):
+#     # Service Skeleton 호출 (List)
+#     return await MealItemService.food_analysis(request.foodnames)
+# return {
+#     "results": [
+#         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
+#         {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
+#     ]
+# }  # nutiritionsta
 
 
 # ===================================================

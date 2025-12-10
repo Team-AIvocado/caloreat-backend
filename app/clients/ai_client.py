@@ -10,6 +10,7 @@ detection_url_v1 = settings.inference_url("v1", "analyze")
 detection_url_v2 = settings.inference_url("v2", "analyze")
 detection_url_v3 = settings.inference_url("v3", "analyze")
 detection_url_v4 = settings.inference_url("v4", "analyze")
+# llm_url_v1 = settings.llm_url("v1", "nutrition")
 
 
 class AIClient:
@@ -43,21 +44,37 @@ class AIClient:
             raise
 
     @staticmethod
-    async def request_analysis(foods: list[dict[str, str]]) -> dict[str, Any]:
+    async def request_single_analysis(foodname: str) -> dict[str, Any]:
         """
-        LLM 서버에 감지된 음식들의 영양소 분석을 요청
-
+        LLM 서버에 단일 음식 영양소 분석을 요청
         """
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                payload = {"foods": foods}
+                payload = {"food_name": foodname}
 
                 response = await client.post(
-                    settings.ai_analysis_url,
+                    f"{settings.ai_analysis_url}/nutrition",
                     json=payload,
-                    headers={"Content-Type": "application/json"},
                 )
                 response.raise_for_status()
                 return response.json()
         except Exception:
             raise
+
+    # @staticmethod
+    # async def request_analysis(foods: list[dict[str, str]]) -> dict[str, Any]:
+    #     """
+    #     LLM 서버에 감지된 음식들의 영양소 분석을 요청 (기존 리스트 방식)
+    #     """
+    #     try:
+    #         async with httpx.AsyncClient(timeout=30.0) as client:
+    #             payload = {"foods": foods}
+
+    #             response = await client.post(
+    #                 f"{settings.ai_analysis_url}/nutrition",
+    #                 json=payload,
+    #             )
+    #             response.raise_for_status()
+    #             return response.json()
+    #     except Exception:
+    #         raise

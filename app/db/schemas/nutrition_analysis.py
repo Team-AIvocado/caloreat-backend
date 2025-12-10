@@ -7,12 +7,22 @@ from typing import Optional
 
 
 # base
-# class MealImageBase(BaseModel):
+
+
 #     image_url: str
 # -- request --
-class AnalysisRequest(BaseModel):
-    foodnames: list[str]  # kakao pasta 최대칼로리 넘으면 음식추가안됨?
-    # 아침 점심 저녁 나눌거면 list[dict]  {meal_type:1(아침), foodname: "김치찌개"}
+class AnalysisItem(BaseModel):
+    image_id: str
+    foodname: str
+
+
+class MultiAnalysisRequest(BaseModel):
+    foodnames: list[AnalysisItem]
+
+
+class SingleAnalysisRequest(BaseModel):
+    foodname: str  # 단일 음식 분석용 (문자열)
+
 
 # Image Response
 # 우선 분석결과 JSON 통으로 저장함 나중에 분리할거임
@@ -20,13 +30,20 @@ class AnalysisRequest(BaseModel):
 # 테이블 id는 저장 전
 #
 
+
 class AnalysisResult(BaseModel):
     foodname: str
     nutritions: dict
 
-class NutrientAnalysisResponse(BaseModel):
+
+class MultiAnalysisResponse(BaseModel):
     results: list[AnalysisResult]  # orm JSON # TODO: 정규화? 그런거모름 나중에함
-    # -> 안하는이유 리스트로 받아서 찢어서 나누고 
+    # -> 안하는이유 리스트로 받아서 찢어서 나누고
+
+
+# Single Response
+class SingleAnalysisResponse(AnalysisResult):
+    pass
 
 
 # ====================================

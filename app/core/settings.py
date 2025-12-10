@@ -27,6 +27,7 @@ class Settings(BaseSettings):
         populate_by_name=True,  # alias허용
         case_sensitive=True,  # 대소문자구분
     )
+
     # mysql기준 -> postgresql 변경예정
     @property
     def tmp_db(self) -> str:
@@ -56,6 +57,11 @@ class Settings(BaseSettings):
         """
         base = self.ai_detection_url.rstrip("/")
         return f"{base}/api/inference/{version}/{path}"
+
+    # 추후 버전, 모델 변경시 수정 nutrition analysis url
+    # def llm_url(self, version: str, path: str) -> str:
+    #     base = self.ai_analysis_url.rstrip("/")
+    #     return f"{base}/api/llm/{version}/{path}"
 
 
 settings = Settings()
