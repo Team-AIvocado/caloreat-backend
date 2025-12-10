@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime, date
 from typing import Optional, Annotated
 from enum import Enum
@@ -44,8 +44,7 @@ class UserProfileInDB(UserProfileBase):
     user_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProfileRead(UserProfileInDB):
@@ -89,8 +88,7 @@ class ProfileFormInDB(ProfileFormBase):
     user_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # create 전용 (age제거)

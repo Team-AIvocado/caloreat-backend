@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -60,10 +60,8 @@ class UserInDB(UserBase):
     created_at: datetime  # = Field(default_factory=lambda : datetime.now(timezone.utc))  #db읽어서 클라이언트 반환
     # provider : str      # 유저의 가입경로, 로그인 방식 구분용 social 로그인 구현후 활성화
 
-    class Config:
-        from_attributes = True  # SQLAlchemy 모델을 바로 응답 모델로 변환 가능
-        # Pydantic v2: from_attributes, v1이면 orm_mode = True
-
+    model_config = ConfigDict(from_attributes=True)  # SQLAlchemy 모델을 바로 응답 모델로 변환 가능
+    # Pydantic v2: from_attributes, v1이면 orm_mode = True
 
 class UserRead(UserInDB):
     phone: str | None = None
