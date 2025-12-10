@@ -25,6 +25,8 @@ from datetime import date
 
 # 서비스
 from app.services.meal_image import MealImageService
+from app.services.meal_item import MealItemService
+from app.services.meal_log import MealLogService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
@@ -41,15 +43,19 @@ async def upload_image_endpoint(
     current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
-    # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
-    return {
-        "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
-        "food_name": "된장찌개",  # response.candidates[0]["label"]
-        "candidates": [
-            {"label": "된장찌개", "confidence": 0.93},
-            {"label": "김치찌개", "confidence": 0.72},
-        ],
-    }
+    # Service Skeleton 호출
+    detection_result = await MealImageService.image_detection(file, current_user.id)
+    return detection_result
+
+    # # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
+    # return {
+    #     "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
+    #     "food_name": "된장찌개",  # response.candidates[0]["label"]
+    #     "candidates": [
+    #         {"label": "된장찌개", "confidence": 0.93},
+    #         {"label": "김치찌개", "confidence": 0.72},
+    #     ],
+    # }
 
 
 # foodname = front state 값 db 저장x
@@ -79,9 +85,12 @@ async def override_prediction_endpoint(
 
 
 # 텍스트 입력(수동입력) # post x -> get
-@router.get("/foods/search")
-async def override_text_endpoint(
-    food: str,  # 사용자가 입력한 텍스트
+# free-text 서비스 품질 박살 (ex. 떡볶이 / 떡복이 / 떡뽂이 / 떡볶기)
+# 사용자 입력 문자열을 믿지말것
+# TODO: 입력해도 안나올시 -> llm에 보내서 음식명 추출한다던지 대안필요
+@router.get("/foods/manual")
+async def search_foods_manual_endpoint(
+    query: str,  # 사용자가 입력한 텍스트
     limit: int = 10,  # 반환 개수
     db: AsyncSession = Depends(get_db),
 ):
@@ -96,7 +105,7 @@ async def override_text_endpoint(
     all_foods = ["된장찌개", "된장국", "김치찌개", "김치볶음밥", "카레", "치킨", "김밥"]
 
     # 필터링
-    results = [f for f in all_foods if food in f][:limit]
+    results = [f for f in all_foods if query in f][:limit]
 
     # 자동완성 리스트 반환
     return {"results": results}
@@ -105,19 +114,22 @@ async def override_text_endpoint(
 # 음식 text 영양소분석
 # 1단계 image detect/cls 에서 선택된 이미지 (아/점/저)
 # 사용자확인 전단계가 존재하므로 confidence는 생략 foodname만 전달
-#
+
+
 # 한끼(점심)에 먹는 음식(str)이 여러개임
 # inferserver request는 하나씩 낱개로
 @router.post("/analyze", response_model=NutrientAnalysisResponse)
 async def analyze_image_endpoint(foodnames: AnalysisRequest):
+    # Service Skeleton 호출
+    return await MealItemService.food_analysis(foodnames.foods)
 
-    # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
-    return {
-        "results": [
-            {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
-            {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
-        ]
-    }  # nutiritionsta
+    # # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
+    # return {
+    #     "results": [
+    #         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
+    #         {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
+    #     ]
+    # }  # nutiritionsta
 
 
 # ===================================================
@@ -135,18 +147,21 @@ async def create_meal_log_endpoint(
     create_meal_log_endpoint
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
-    # TODO: 임시 - DB 저장 구현 필요
-    return {
-        "meal_type": "snack",
-        "eaten_at": "2025-12-04T15:09:50.409Z",
-        "meal_items": [
-            {
-                "foodname": "avocado",
-                "quantity": 100,
-                "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
-            }
-        ],
-    }
+    # Service Skeleton 호출
+    return await MealLogService.create_meal_log(db, meal, current_user.id)
+
+    # # TODO: 임시 - DB 저장 구현 필요
+    # return {
+    #     "meal_type": "snack",
+    #     "eaten_at": "2025-12-04T15:09:50.409Z",
+    #     "meal_items": [
+    #         {
+    #             "foodname": "avocado",
+    #             "quantity": 100,
+    #             "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
+    #         }
+    #     ],
+    # }
 
 
 # read by date/ query

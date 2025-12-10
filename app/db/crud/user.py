@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.models.user import User
 from app.db.schemas.user import UserCreate, UserUpdate
-from typing import Optional, List
+from typing import Optional
 from fastapi import HTTPException
 
 
@@ -44,7 +44,7 @@ class UserCrud:
 
     # 모든유저 조회
     @staticmethod
-    async def get_all_user(db: AsyncSession) -> List[User]:
+    async def get_all_user(db: AsyncSession) -> list[User]:
         result = await db.execute(select(User))
         return result.scalars().all()
 

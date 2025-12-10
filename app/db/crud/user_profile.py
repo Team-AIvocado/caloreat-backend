@@ -7,7 +7,7 @@ from app.db.schemas.user_profile import (
     ProfileFormCreate,
     ProfileFormRead,
 )
-from typing import Optional, List
+from typing import Optional
 
 # UserProfile, front(userInfo)
 # User:UserProfile = 1:1

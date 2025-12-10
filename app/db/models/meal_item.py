@@ -23,7 +23,7 @@ class MealItem(Base):
     id = Column(BigInteger, primary_key=True)
     meal_log_id = Column(BigInteger, nullable=False)
     quantity = Column(Float, nullable=False)
-    nutiritionsta = Column(JSON, nullable=True)  # 음식이름, 영양소정보 통저장
+    nutritions = Column(JSON, nullable=True)  # 음식이름, 영양소정보 통저장
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

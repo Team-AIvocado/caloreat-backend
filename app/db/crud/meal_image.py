@@ -10,7 +10,7 @@
 # from app.db.schemas.meal_image import (
 #     MealImageResponse,
 # )
-# from typing import Optional, List
+# from typing import Optional, list
 
 
 # class MealImageCrud:

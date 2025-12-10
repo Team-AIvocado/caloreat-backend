@@ -14,7 +14,7 @@ from app.db.schemas.user_health_condition import (
 )
 from app.services.user_health_condition import HealthConditionService
 
-from typing import Annotated, List
+from typing import Annotated
 
 
 router = APIRouter(prefix="/users/me/heatlh-conditions", tags=["HealthCondition"])
@@ -45,7 +45,7 @@ async def create_condition_endpoint(
 
 # ---- 복수단위 엔드포인트 ---
 # # add conditions
-# @router.post("/", response_model=List[HealthConditionRead])
+# @router.post("/", response_model=list[HealthConditionRead])
 # async def create_condition_list_endpoint(
 #     conditions: HealthConditionCreate,
 #     current_user: User = Depends(get_current_user),

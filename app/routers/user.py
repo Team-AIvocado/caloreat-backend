@@ -20,7 +20,7 @@ from app.db.crud.user import UserCrud
 
 from app.core.auth import set_login_cookies, set_access_cookie
 
-from typing import Annotated, List
+from typing import Annotated
 
 router = APIRouter(prefix="/users", tags=["User"])
 
@@ -83,7 +83,7 @@ async def read_me(current_user=Depends(get_current_user)):
 
 # # 모든 사용자조회(관리자용)  : is_admin or username==admin 필요하면 추가
 # # service logic 생성필요
-# @router.get("/", response_model=List[UserRead])
+# @router.get("/", response_model=list[UserRead])
 # async def read_all_user_route(db: AsyncSession, current_user= ):
 #     users = await read_all_user(db)
 #     return users

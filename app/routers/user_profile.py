@@ -15,7 +15,7 @@ from app.db.schemas.user_profile import (
 from app.services.user import UserService
 from app.services.user_profile import UserProfileService
 
-from typing import Annotated, List
+from typing import Annotated
 
 # URL path 언더스코어 금지원칙 user_profile -> user-profile -> profile
 router = APIRouter(prefix="/users/me/profile", tags=["UserProfile"])

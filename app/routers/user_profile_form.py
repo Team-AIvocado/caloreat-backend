@@ -20,7 +20,7 @@ from app.services.user_profile import UserProfileService
 from app.services.user_profile_form import ProfileFormService
 
 
-from typing import Annotated, List
+from typing import Annotated
 
 router = APIRouter(prefix="/users/me/profile", tags=["ProfileForm"])
 

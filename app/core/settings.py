@@ -45,10 +45,17 @@ class Settings(BaseSettings):
     def refresh_token_expire(self) -> timedelta:
         return timedelta(seconds=self.refresh_token_expire_sec)
 
-    # # ai_model url
-    # @property
-    # def ai_model_url(self)->str:
-    #     pass
+    # AI Model URLs
+    ai_detection_url: str = Field(..., alias="AI_DETECTION_URL")
+    ai_analysis_url: str = Field(..., alias="AI_ANALYSIS_URL")
+
+    def inference_url(self, version: str, path: str) -> str:
+        """
+        version: "v1", "v2", "v3", "v4"
+        path: "analyze", "analyze-url"
+        """
+        base = self.ai_detection_url.rstrip("/")
+        return f"{base}/api/inference/{version}/{path}"
 
 
 settings = Settings()
