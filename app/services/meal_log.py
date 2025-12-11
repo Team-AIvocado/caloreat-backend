@@ -17,6 +17,8 @@ from datetime import date
 
 from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
+
+from app.db.schemas.meal_log import MealLogRead
 from app.db.schemas.meal_log import MealLogCreate
 from app.db.crud.meal_log import MealLogCrud
 
@@ -63,4 +65,23 @@ class MealLogService:
         except Exception as e:
             await db.rollback()
             print(f"[SERVICE ERROR][create_meal_log] {e}")
+            raise
+
+    @staticmethod
+    async def read_meal_log(
+        db: AsyncSession, user_id: int, date: date | None
+    ) -> list[MealLog]:
+        """
+        MealLog 조회
+        """
+        # 식단없으면 빈배열 반환
+        if date is None:
+            return []
+
+        try:
+            db_logs = await MealLogCrud.get_meal_logs_db(db, user_id, date)
+            return db_logs
+
+        except Exception as e:
+            print(f"[SERVICE ERROR][read_meal_log] {e}")
             raise

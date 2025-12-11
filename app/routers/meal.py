@@ -176,6 +176,7 @@ async def create_meal_log_endpoint(
 
 
 # read by date/ query
+# 날짜별 식단조회 아침,점심,저녁
 @router.get("/logs", response_model=list[MealLogRead])
 async def read_meal_log_endpoint(
     date: date | None = None,  # query param
@@ -186,36 +187,39 @@ async def read_meal_log_endpoint(
     ?date=2025-12-04
     example request : 2025-12-04
     """
+    user_id = current_user.id
+    return await MealLogService.read_meal_log(db, user_id, date)
+
     # TODO: 임시 - DB query 구현 필요
-    return [
-        {
-            "id": 101,
-            "meal_type": "lunch",
-            "eaten_at": "2025-12-04T12:35:10.000Z",
-            "image_urls": [
-                "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/lunch_101.jpg"
-                "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/dinner_101.jpg"
-            ],
-            "created_at": "2025-12-04T12:40:00.000Z",
-            "meal_items": [
-                {
-                    "id": 1,
-                    "meal_log_id": 101,
-                    "foodname": "된장찌개",
-                    "quantity": 1,
-                    "nutritions": {"calories": 230, "carbs": 18},
-                },
-                {
-                    "id": 2,
-                    "meal_log_id": 101,
-                    "foodname": "김치",
-                    "quantity": 1,
-                    "nutritions": {"calories": 90, "carbs": 7},
-                },
-            ],
-        }
-        # image 아이디 필요
-    ]
+    # return [
+    #     {
+    #         "id": 101,
+    #         "meal_type": "lunch",
+    #         "eaten_at": "2025-12-04T12:35:10.000Z",
+    #         "image_urls": [
+    #             "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/lunch_101.jpg"
+    #             "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/dinner_101.jpg"
+    #         ],
+    #         "created_at": "2025-12-04T12:40:00.000Z",
+    #         "meal_items": [
+    #             {
+    #                 "id": 1,
+    #                 "meal_log_id": 101,
+    #                 "foodname": "된장찌개",
+    #                 "quantity": 1,
+    #                 "nutritions": {"calories": 230, "carbs": 18},
+    #             },
+    #             {
+    #                 "id": 2,
+    #                 "meal_log_id": 101,
+    #                 "foodname": "김치",
+    #                 "quantity": 1,
+    #                 "nutritions": {"calories": 90, "carbs": 7},
+    #             },
+    #         ],
+    #     }
+    #     # image 아이디 필요
+    # ]
 
 
 # update patch -> put변경  TODO: front 데이터수정 전송방식 meal부분 변경전달필요
