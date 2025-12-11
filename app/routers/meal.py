@@ -223,21 +223,24 @@ async def read_meal_log_endpoint(
 
 
 # update patch -> put변경  TODO: front 데이터수정 전송방식 meal부분 변경전달필요
-@router.put("/log/{meal_id}")
+# update (PUT)
+@router.put("/log/{meal_id}", response_model=MealLogRead)
 async def update_meal_log_endpoint(
-    foods: list[str],
+    meal_id: int,
+    meal_update: MealLogUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    update_meal_log_endpoint
+    식단 수정 API (Full Replace)
     - 본인이 작성한 식단만 수정 가능
-    :param foods: ["foodname1","foodname2",...]
-    :type foods: list[str]
-
+    - 요청 본문의 내용으로 식단을 통째로 교체
+    - 메타데이터(시간, 타입) 업데이트 (이미지 수정 불가)
+    - 음식 목록 전체 교체 (기존 삭제 -> 신규 생성)
     """
-    # TODO: 임시 - DB update 구현 필요
-    return {"message": "updated"}
+    return await MealLogService.update_meal_log(
+        db, current_user.id, meal_id, meal_update
+    )
 
 
 # delete / params: none
@@ -250,4 +253,4 @@ async def delete_meal_log_endpoint(
     """
     삭제 시 MealItem 자동 삭제 (ON DELETE CASCADE)
     """
-    return await MealLogService.delete_meal_log(db, current_user.id, meal_id)
+    return await MealLogService.delete_meal_log(db, current_user.id, meal_id)  # boolean

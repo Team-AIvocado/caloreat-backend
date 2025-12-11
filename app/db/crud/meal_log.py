@@ -16,7 +16,8 @@ class MealLogCrud:
     """
 
     # --create--
-    # meal_log DB쓰기
+    # meal_log
+    # TODO: orm handling 변경 중복방지 + 안정성증가
     @staticmethod
     async def create_meal_log_db(db: AsyncSession, log_data: dict) -> MealLog:
         """
@@ -29,7 +30,7 @@ class MealLogCrud:
         await db.refresh(new_log)
         return new_log
 
-    # meal_item DB쓰기
+    # meal_item
     @staticmethod
     async def create_meal_items_db(
         db: AsyncSession, items_data: list[dict]
@@ -47,7 +48,7 @@ class MealLogCrud:
         return new_items  # TODO: read 구현 후 DTO처리 고민 필요
 
     # --read--
-    # 현재로그인한 유저의 날짜별 식단(아침,점심,저녁)조회
+    # 현재로그인한 유저의 해당날짜의 식단(아침,점심,저녁)조회
     @staticmethod
     async def get_meal_logs_db(
         db: AsyncSession, user_id: int, date=None
@@ -56,7 +57,7 @@ class MealLogCrud:
         if not date:
             return []
 
-        # 기본 쿼리 구성 (User Profile 스타일) + 날짜 필터링 필수
+        # 기본 쿼리 구성 + 날짜 필터링 필수
         result = await db.execute(
             select(MealLog)
             .where(MealLog.user_id == user_id)
@@ -66,6 +67,18 @@ class MealLogCrud:
         )
 
         return result.scalars().all()
+
+    @staticmethod
+    async def get_meal_log_by_id_db(db: AsyncSession, meal_id: int) -> MealLog | None:
+        """
+        특정 식단 단건 조회 (MealItem 포함)
+        """
+        result = await db.execute(
+            select(MealLog)
+            .where(MealLog.id == meal_id)
+            .options(selectinload(MealLog.meal_items))
+        )
+        return result.scalar_one_or_none()
 
     # --delete--
     @staticmethod
@@ -83,3 +96,38 @@ class MealLogCrud:
 
         # rowcount는 “실제로 삭제된 결과”를 정확하게 보증
         return result.rowcount > 0
+
+    # --update-- direct query -> orm handling 변경
+    @staticmethod
+    async def update_meal_log_db(
+        db: AsyncSession, meal_id: int, user_id: int, update_data: dict
+    ) -> MealLog | None:
+        """
+        MealLog 메타데이터(meal_type, eaten_at 등) 업데이트 (Read-Modify-Update 패턴)
+        :return: 업데이트된 MealLog 객체 (없거나 권한 없으면 None)
+        """
+        # 1. 조회 (SELECT)
+        result = await db.execute(
+            select(MealLog).where(MealLog.id == meal_id, MealLog.user_id == user_id)
+        )
+        meal_log = result.scalar_one_or_none()
+
+        if not meal_log:
+            return None
+
+        # 2. 수정 (Apply Changes)
+        for key, value in update_data.items():
+            if hasattr(meal_log, key):
+                setattr(meal_log, key, value)
+
+        # 3. 반영 (Flush -> UPDATE Query)
+        await db.flush()
+        return meal_log
+
+    @staticmethod
+    async def delete_meal_items_by_log_id(db: AsyncSession, meal_log_id: int):
+        """
+        특정 MealLog에 속한 모든 MealItem 삭제 (Full Replace 준비)
+        """
+
+        await db.execute(delete(MealItem).where(MealItem.meal_log_id == meal_log_id))

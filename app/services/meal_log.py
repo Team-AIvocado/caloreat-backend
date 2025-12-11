@@ -1,5 +1,4 @@
 from fastapi import HTTPException, status, UploadFile, File
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.schemas.meal_image import (
@@ -19,7 +18,7 @@ from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
 
 from app.db.schemas.meal_log import MealLogRead
-from app.db.schemas.meal_log import MealLogCreate
+from app.db.schemas.meal_log import MealLogCreate, MealLogUpdate
 from app.db.crud.meal_log import MealLogCrud
 from app.services.meal_image import MealImageService
 
@@ -81,6 +80,66 @@ class MealLogService:
             await db.rollback()
             print(f"[SERVICE ERROR][create_meal_log] {e}")
             raise
+
+    # update (PUT)
+    # TODO: update logic review필요 찝집함, 헬퍼함수 분리 refactoring 고려(가독성)
+    @staticmethod
+    async def update_meal_log(
+        db: AsyncSession, user_id: int, meal_id: int, update_req: MealLogUpdate
+    ) -> MealLog:
+        """
+        식단(MealLog) 전체 수정 (Full Replace)
+        1. MealLog 메타데이터 (type, time) 업데이트 (이미지 수정 불가)
+        2. 기존 MealItem 전체 삭제
+        3. 새 MealItem 전체 생성
+        """
+        # 1. MealLog 업데이트 (메타데이터만)
+        # items는 별도 처리하므로 제거
+        update_data = update_req.model_dump(
+            exclude={"meal_items", "image_urls"}, exclude_unset=True
+        )
+
+        # Log 업데이트 시도 (존재 여부 및 소유권 확인 겸용)
+        # CRUD 내부에서 SELECT -> setattr -> flush 수행
+        updated_log = await MealLogCrud.update_meal_log_db(
+            db, meal_id, user_id, update_data
+        )
+
+        if not updated_log:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Meal log not found or permission denied",
+            )
+
+        # 2. MealItems 교체 (Full Replace) 트랜잭션
+        try:
+            # 기존 아이템 전량 삭제
+            await MealLogCrud.delete_meal_items_by_log_id(db, meal_id)
+
+            # 새 아이템 데이터 준비
+            new_items_data = []
+            for item in update_req.meal_items:
+                item_dict = item.model_dump()
+                item_dict["meal_log_id"] = meal_id
+                new_items_data.append(item_dict)
+
+            # 새 아이템 일괄 생성
+            if new_items_data:
+                await MealLogCrud.create_meal_items_db(db, new_items_data)
+
+            # 3. 트랜잭션 확정
+            await db.commit()
+
+            # Response를 위해 관계 데이터(meal_items)를 포함하여 다시 조회
+            return await MealLogCrud.get_meal_log_by_id_db(db, meal_id)
+
+        except Exception as e:
+            await db.rollback()
+            print(f"[SERVICE ERROR][update_meal_log] {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while updating the meal log",
+            )
 
     # read
     @staticmethod

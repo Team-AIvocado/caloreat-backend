@@ -65,6 +65,7 @@ class MealLogCreate(MealLogBase):
 class MealLogUpdate(MealLogBase):
     """
     PUT사용 -> 통으로 교체
+    이미지 수정 불가 (재등록 사이클)
     """
 
     meal_items: list[MealItemCreate]
