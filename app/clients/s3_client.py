@@ -18,14 +18,14 @@ class S3Client:
     def __init__(self):
         # boto3 Session 기반 생성 (스레드 안전, 재사용 효율)
         self.session = boto3.session.Session(
-            aws_access_key_id = settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key = settings.AWS_SECRET_ACCESS_KEY,
-            region_name = settings.AWS_REGION,
+            aws_access_key_id = settings.aws_access_key_id,
+            aws_secret_access_key = settings.aws_secret_access_key,
+            region_name = settings.aws_region,
         )
 
         self.s3 = self.session.client("s3")
-        self.bucket = settings.S3_BUCKET_NAME
-        self.region = settings.AWS_REGION
+        self.bucket = settings.s3_bucket_name
+        self.region = settings.aws_region
 
     def _generate_s3_url(self, object_name: str) -> str:
         """
@@ -45,8 +45,7 @@ class S3Client:
         extra_args = {"ContentType": content_type}
 
         # 프론트에서 직접 접근해야 하므로 기본 public-read
-        if public:
-            extra_args["ACL"] = "public-read"
+
 
         try:
             self.s3.upload_file(

@@ -13,6 +13,7 @@ annotated-types==0.7.0
 anyio==4.11.0
     # via
     #   backend (pyproject.toml)
+    #   httpx
     #   starlette
 asyncpg==0.30.0
     # via backend (pyproject.toml)
@@ -24,6 +25,10 @@ botocore==1.42.7
     # via
     #   boto3
     #   s3transfer
+certifi==2025.11.12
+    # via
+    #   httpcore
+    #   httpx
 cffi==2.0.0
     # via
     #   backend (pyproject.toml)
@@ -47,6 +52,7 @@ greenlet==3.2.4
 h11==0.16.0
     # via
     #   backend (pyproject.toml)
+    #   httpcore
     #   uvicorn
 h2==4.3.0
     # via backend (pyproject.toml)
@@ -54,6 +60,10 @@ hpack==4.1.0
     # via
     #   backend (pyproject.toml)
     #   h2
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via backend (pyproject.toml)
 hyperframe==6.1.0
     # via
     #   backend (pyproject.toml)
@@ -63,6 +73,7 @@ idna==3.11
     #   backend (pyproject.toml)
     #   anyio
     #   email-validator
+    #   httpx
 jmespath==1.0.1
     # via
     #   boto3
