@@ -46,7 +46,7 @@ uv run uvicorn main:app --port 8000 --reload
 uv run main.py
 ```
 
-#### 임시 : 음식 분석을 위해 다른 분석 모듈이 필요합니다.
+#### 임시 : 음식 분석을 위해 다른 분석 모듈이 필요합니다. (그룹 Org 다른 Repo 참조)
 
 ```bash
 # Inference Module
