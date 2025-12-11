@@ -1,83 +1,94 @@
 import os
 import uuid
-import shutil
+import mimetypes
 from fastapi import UploadFile
-from typing import Optional
-
+from fastapi import HTTPException
 
 class FileManager:
     """
-    임시 파일의 저장 및 정리를 관리
+    실서비스용 FileManager.
+    -> 임시 디렉토리에 파일 저장
+    -> 확장자/크기/MIME 검증
+    -> UUID 기반 파일명 생성
     """
 
-    @staticmethod
-    # 임시파일저장
-    async def save_tmp_image(file: UploadFile) -> str:
+    TEMP_DIR = "/tmp"
+    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+    MAX_FILE_SIZE_MB = 10 # 업로드 파일 최대 10MB(서버 메모리와 I/O 부담을 막기 위해)
+
+    def __init__(self):
+        os.makedirs(self.TEMP_DIR, exist_ok=True)
+
+    def _validate_extension(self, filename: str):
         """
-        업로드된 파일을 UUID 파일명을 사용하여 임시 경로에 저장
-
-        Returns:
-            str: 저장된 임시 파일의 절대 경로
+        허용되지 않은 확장자 방지.
         """
-        # 임시 디렉토리 설정 (없으면 생성)
-        tmp_dir = "/tmp/caloreat_images"
-        os.makedirs(tmp_dir, exist_ok=True)
+        ext = filename.rsplit(".", 1)[-1].lower()
+        if ext not in self.ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file extension: .{ext}",
+            )
+        
+    def _validate_mime(self, file: UploadFile):
+        """
+        MIME 타입 검사 (이미지인지 확인)
+        """
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid MIME type: {file.content_type}",
+            )
+        
+    def _validate_size(self, file: UploadFile):
+        """
+        업로드 파일의 크기가 제한을 초과하는지 확인.
+        (UploadFile은 크기 정보를 바로 주지 않으므로 read 후 체크)
+        """
+        file.file.seek(0, os.SEEK_END)
+        size = file.file.tell()
+        file.file.seek(0)
 
-        # 원본 파일명에서 확장자 추출
-        file_ext = file.filename.split(".")[-1] if file.filename else "jpg"
+        max_bytes = self.MAX_FILE_SIZE_MB * 1024 * 1024
+        if size > max_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File size exceeds limit of {self.MAX_FILE_SIZE_MB} MB",
+            )
+        
+    def save_temp_file(self, file: UploadFile) -> str:
+        """
+        UploadFile을 TEMP_DIR에 안전하게 저장하고 경로 반환.
+        """
+        # 검증 단계
+        self._validate_extension(file.filename)
+        self._validate_mime(file)
+        self._validate_size(file)
 
-        # 상태유지 이미지 식별자 (UUID)
-        image_id = str(uuid.uuid4())
+        # 고유한 파일명 생성 (사용자 파일명 사용 금지)
+        ext = file.filename.rsplit(".", 1)[-1].lower()
+        filename = f"{uuid.uuid4()}.{ext}"
 
-        # 저장될 파일명 (unique)
-        filename = f"{image_id}.{file_ext}"
-        file_path = os.path.join(tmp_dir, filename)
+        # 최종 저장 경로
+        file_path = os.path.join(self.TEMP_DIR, filename)
 
         # 파일 저장
         try:
-            with open(file_path, "wb") as buffer:
-                # shutil 로직: 대용량 파일도 버퍼링을 통해 복사
-                shutil.copyfileobj(file.file, buffer)
-                # TODO: ★★★★★★★ 반드시 기록저장 클릭시 1.s3로직+ 2.tmp cleanup 로직 추가 필요 ★★★
-        except Exception as e:
-            # 파일 저장 실패 시 에러 처리 (로그 등)
-            raise e
-        finally:
-            await file.seek(0)  # 파일 포인터 초기화 (필요 시)
-
-        return file_path
-
-    @staticmethod
-    async def delete_tmp_image(file_path: str) -> None:
-        """
-        로컬 파일 시스템에서 파일을 삭제
-
-        Args:
-            file_path (str): 삭제할 파일의 절대 경로
-        """
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except OSError as e:
-            # 삭제 실패 시 로그 남기기 (여기서는 print로 대체하거나 logging 모듈 사용)
-            print(f"Error deleting file {file_path}: {e}")
-            # 필요에 따라 예외를 다시 발생시키지 않고 넘어갈 수 있음
-            pass
-
-    @staticmethod
-    async def save_by_bytes(image_data: bytes, filename: str) -> str:
-        """
-        바이트 데이터를 임시 경로에 저장
-        """
-        tmp_dir = "/tmp/caloreat_images"
-        os.makedirs(tmp_dir, exist_ok=True)
-
-        file_path = os.path.join(tmp_dir, filename)
-
-        try:
             with open(file_path, "wb") as f:
-                f.write(image_data)
-        except Exception as e:
-            raise e
+                f.write(file.file.read())
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save file to server",
+            )
 
         return file_path
+
+    def remove_temp_file(self, file_path: str):
+        """
+        S3 업로드가 끝난 후 임시 파일 삭제.
+        """
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+

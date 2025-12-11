@@ -15,6 +15,8 @@ from . import stats
 # ai
 from . import ai_feedback
 
+# Upload
+from . import upload_router
 
 # from . import user_allergy
 
@@ -34,7 +36,8 @@ router.include_router(stats.stats_router)
 router.include_router(stats.dashboard_router)
 # AI
 router.include_router(ai_feedback.router)
-
+# Upload
+router.include_router(upload_router.router)
 
 # 변경: 도메인만모아서 한 객체로 반환
 __all__ = ["router"]
