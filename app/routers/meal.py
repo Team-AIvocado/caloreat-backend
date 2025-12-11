@@ -159,7 +159,7 @@ async def create_meal_log_endpoint(
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
     # Service Skeleton 호출
-    return await MealLogService.create_meal_log(db, meal, current_user.id)
+    return await MealLogService.create_meal_log(db, current_user.id, meal)
 
     # # TODO: 임시 - DB 저장 구현 필요
     # return {

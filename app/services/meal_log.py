@@ -18,9 +18,7 @@ from datetime import date
 from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
 from app.db.schemas.meal_log import MealLogCreate
-
-from app.services.file_manager import FileManager
-import os
+from app.db.crud.meal_log import MealLogCrud
 
 
 class MealLogService:
@@ -30,39 +28,39 @@ class MealLogService:
     ):
         try:
             # 1. 이미지 처리 (tmp -> S3)
-            # - tmp 경로 찾기
-            # - S3 업로드 (현재는 Mocking)
-            # - 로컬 파일 정리
-            # meal log에 저장할 image_url
-            image_urls = []
-            if meal_create.tmp_image_ids:
+            # MealImageService에 위임하여 S3 업로드 및 URL 획득
+            from app.services.meal_image import MealImageService
 
-                # S3 Client Skeleton (활성화 시 주석 해제)
-                # from app.clients.s3_client import S3Client
+            image_urls = await MealImageService.upload_tmp_images_to_s3(
+                meal_create.tmp_image_ids
+            )
 
-                for image_id in meal_create.tmp_image_ids:
-                    try:
-                        # 로컬 임시 파일 경로 찾기
-                        tmp_path = FileManager.get_tmp_file_path(image_id)
+            # 2. CRUD 계층 호출을 위한 데이터 준비 (Dictionary 변환)
+            # MealLog 데이터 준비
+            log_data = meal_create.model_dump(include={"meal_type", "eaten_at"})
+            log_data["user_id"] = current_user_id
+            log_data["image_urls"] = image_urls
 
-                        # TODO: [S3 Upload Skeleton] - 실제 구현 시 주석 해제 및 사용
-                        # s3_url = S3Client.upload_file(tmp_path, f"meals/{image_id}.jpg")
+            # MealLog 생성 (CRUD 호출)
 
-                        # [Mocking] 더미 URL 생성 (검증용)
-                        s3_url = f"https://s3.ap-northeast-2.amazonaws.com/caloreat-bucket/meals/{image_id}.jpg"
-                        image_urls.append(s3_url)
+            new_log = await MealLogCrud.create_meal_log_db(db, log_data)
 
-                        # [Cleanup] S3 승격 완료 후 로컬 임시 파일 삭제
-                        if os.path.exists(tmp_path):
-                            os.remove(tmp_path)
+            # MealItem 데이터 준비
+            items_data = []
+            for item in meal_create.meal_items:
+                item_dict = item.model_dump()
+                item_dict["meal_log_id"] = new_log.id
+                items_data.append(item_dict)
 
-                    except FileNotFoundError:
-                        # 파일이 없는 경우 경고 로그 출력 후 진행
-                        print(f"Warning: Image file not found for ID {image_id}")
-                        continue
+            # MealItem 일괄 생성 (CRUD 호출)
+            await MealLogCrud.create_meal_items_db(db, items_data)
 
-            # TODO: 다음 단계에서 DB 저장 로직 구현
-            return {"status": "processing_images", "image_urls": image_urls}
+            # 3. 트랜잭션 확정
+            await db.commit()
+            await db.refresh(new_log)
+            return new_log
 
         except Exception as e:
-            raise e
+            await db.rollback()
+            print(f"[SERVICE ERROR][create_meal_log] {e}")
+            raise

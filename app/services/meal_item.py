@@ -1,29 +1,11 @@
-from fastapi import HTTPException, status, UploadFile, File
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.schemas.meal_image import (
-    MealImageResponse,
-)
-from app.db.models.user import User
-
-# from app.db.models.meal_unused import MealImage
-
-# from app.db.crud.meal_image import MealImageCrud
-from datetime import date
-import os
-
-
 from app.clients.ai_client import AIClient
-
-
 import uuid
 
 
 class MealItemService:
     # AIClient.request_analysis 호출하여 음식 리스트에 대한 영양소 분석 및 반환
     # 음식에대한 영양소개념 < 내가먹은 식단에대한 영양소 스냅샷 개념 #### TODO: food에대한 영양소테이블은 이후 추가
-    @staticmethod
+
     @staticmethod
     async def food_analysis(foodnames: list):
         """
@@ -54,7 +36,7 @@ class MealItemService:
         # 3. 결과 반환
         return analysis_result
 
-    # TODO: food도메인 추가 후 food tables db저장 로직 추가 필요 (MVP범위)
+    # TODO: food도메인 추가 후 food tables db저장 로직 추가 필요 (MVP범위) ->
     # 중요 ★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆
     # food도메인 현재 존재 x
     # Food : 음식별 -영양소, 이름,한글이름, 스냅샷을 정규화한 테이블사용
