@@ -231,7 +231,7 @@ async def update_meal_log_endpoint(
 ):
     """
     update_meal_log_endpoint
-
+    - 본인이 작성한 식단만 수정 가능
     :param foods: ["foodname1","foodname2",...]
     :type foods: list[str]
 
@@ -243,8 +243,11 @@ async def update_meal_log_endpoint(
 # delete / params: none
 @router.delete("/log/{meal_id}")
 async def delete_meal_log_endpoint(
+    meal_id: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: 임시 - DB 삭제 구현 필요
-    return {"message": "deleted"}
+) -> bool:
+    """
+    삭제 시 MealItem 자동 삭제 (ON DELETE CASCADE)
+    """
+    return await MealLogService.delete_meal_log(db, current_user.id, meal_id)

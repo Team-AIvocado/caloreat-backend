@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, cast, Date
+from sqlalchemy import select, cast, Date, delete, CursorResult
 
 
 # MealLog
@@ -60,9 +60,26 @@ class MealLogCrud:
         result = await db.execute(
             select(MealLog)
             .where(MealLog.user_id == user_id)
-            .where(cast(MealLog.eaten_at, Date) == date)
+            .where(cast(MealLog.eaten_at, Date) == date)  # datetime -> Date(YYYY-MM-DD)
             .options(selectinload(MealLog.meal_items))
             .order_by(MealLog.eaten_at.desc())
         )
 
         return result.scalars().all()
+
+    # --delete--
+    @staticmethod
+    async def delete_meal_log_db(db: AsyncSession, meal_id: int, user_id: int) -> bool:
+        """
+        MealLog 삭제 (ON DELETE CASCADE로 MealItem도 자동 삭제됨)
+        :param meal_id: 삭제할 식단 ID
+        :param user_id: 소유자 확인용 User ID
+        :return: 삭제 성공 여부 (True: 삭제됨, False: 대상 없음)
+        """
+        # ORM 객체 생성 없이 조건에 맞는 레코드 바로 삭제
+        result = await db.execute(
+            delete(MealLog).where(MealLog.id == meal_id, MealLog.user_id == user_id)
+        )
+
+        # rowcount는 “실제로 삭제된 결과”를 정확하게 보증
+        return result.rowcount > 0
