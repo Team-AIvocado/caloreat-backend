@@ -30,7 +30,9 @@ class MealItemInDB(MealItemBase):
     meal_item_id: int = Field(..., alias="id")
     meal_log_id: int  # FK (JSON에 존재함)
 
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)  # 예외발생 안전장치 추가
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True
+    )  # 예외발생 안전장치 추가
 
 
 class MealItemRead(MealItemInDB):
@@ -56,6 +58,8 @@ class MealLogCreate(MealLogBase):
     """
 
     meal_items: list[MealItemCreate]
+    tmp_image_ids: list[str]
+    # 클라이언트가 업로드한 임시 이미지 UUID 리스트 (S3 URL로 변환됨)
 
 
 class MealLogUpdate(MealLogBase):

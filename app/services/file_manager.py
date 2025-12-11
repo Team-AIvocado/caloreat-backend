@@ -4,6 +4,8 @@ import shutil
 from fastapi import UploadFile
 from typing import Optional
 
+# FileManager tmp lifecycle CRUD
+
 
 class FileManager:
     """
@@ -81,3 +83,33 @@ class FileManager:
             raise e
 
         return file_path
+
+    # 식단 저장, S3 업로드 flow
+    @staticmethod
+    def get_tmp_file_path(image_id: str) -> str:
+        """
+        이미지 ID로부터 임시 파일 경로를 반환
+
+        Args:
+            image_id (str): 업로드된 이미지의 UUID
+
+        Returns:
+            str: 임시 파일의 절대 경로
+        """
+        tmp_dir = "/tmp/caloreat_images"
+
+        # 저장 시 원본 확장자를 유지하므로 (예: {uuid}.png),
+        # UUID만으로는 확장자를 알 수 없어 디렉토리 검색이 필요함.
+
+        # 해당 ID로 시작하는 파일 찾기 스캔
+        try:
+            for filename in os.listdir(tmp_dir):
+                # UUID가 정확히 매칭되는지 확인 (파일명: {uuid}.{ext})
+                if filename.startswith(image_id) and filename[len(image_id)] == ".":
+                    return os.path.join(tmp_dir, filename)
+        except FileNotFoundError:
+            # tmp 디렉토리가 없는 경우 등
+            raise FileNotFoundError(f"Image directory not found: {tmp_dir}")
+
+        # 파일을 찾지 못한 경우 명시적 에러 발생
+        raise FileNotFoundError(f"Image file not found for ID: {image_id}")

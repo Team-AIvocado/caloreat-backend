@@ -19,49 +19,50 @@ from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
 from app.db.schemas.meal_log import MealLogCreate
 
+from app.services.file_manager import FileManager
+import os
+
 
 class MealLogService:
     @staticmethod
     async def create_meal_log(
-        db: AsyncSession, meal_create: MealLogCreate, current_user_id: int
+        db: AsyncSession, current_user_id: int, meal_create: MealLogCreate
     ):
-        """
-        식단(MealLog) 및 상세 음식(MealItem)을 DB에 저장하는 스켈레톤
-        """
         try:
-            # 1. MealLog (부모) 저장
-            # MealLog 객체 생성 (사용자 ID 및 요청 데이터 매핑)
-            # new_log = MealLog(
-            #     user_id=current_user_id,
-            #     meal_type=meal_create.meal_type,
-            #     eaten_at=meal_create.eaten_at,
-            #     image_urls=meal_create.image_urls
-            # )
-            # db.add(new_log)
-            # await db.flush()  # DB에 임시 반영하여 new_log.id 생성
-            # await db.refresh(new_log)  # 생성된 ID 등 최신 정보 로드
+            # 1. 이미지 처리 (tmp -> S3)
+            # - tmp 경로 찾기
+            # - S3 업로드 (현재는 Mocking)
+            # - 로컬 파일 정리
+            # meal log에 저장할 image_url
+            image_urls = []
+            if meal_create.tmp_image_ids:
 
-            # 2. MealItem (자식) 반복 저장
-            # 반복문으로 각 음식 아이템 처리
-            # for item in meal_create.meal_items:
-            #     new_item = MealItem(
-            #         meal_log_id=new_log.id,  # 생성된 부모 ID 연결
-            #         foodname=item.foodname,
-            #         quantity=item.quantity,
-            #         nutritions=item.nutritions  # JSON 형태 그대로 저장
-            #     )
-            #     db.add(new_item)
+                # S3 Client Skeleton (활성화 시 주석 해제)
+                # from app.clients.s3_client import S3Client
 
-            # 3. 트랜잭션 확정 (Commit)
-            # 모든 작업 성공 시 커밋
-            # await db.commit()
+                for image_id in meal_create.tmp_image_ids:
+                    try:
+                        # 로컬 임시 파일 경로 찾기
+                        tmp_path = FileManager.get_tmp_file_path(image_id)
 
-            # 4. 결과 반환
-            # 저장된 MealLog 객체 반환 (스키마에 맞춰 응답)
-            # return new_log
-            pass
+                        # TODO: [S3 Upload Skeleton] - 실제 구현 시 주석 해제 및 사용
+                        # s3_url = S3Client.upload_file(tmp_path, f"meals/{image_id}.jpg")
+
+                        # [Mocking] 더미 URL 생성 (검증용)
+                        s3_url = f"https://s3.ap-northeast-2.amazonaws.com/caloreat-bucket/meals/{image_id}.jpg"
+                        image_urls.append(s3_url)
+
+                        # [Cleanup] S3 승격 완료 후 로컬 임시 파일 삭제
+                        if os.path.exists(tmp_path):
+                            os.remove(tmp_path)
+
+                    except FileNotFoundError:
+                        # 파일이 없는 경우 경고 로그 출력 후 진행
+                        print(f"Warning: Image file not found for ID {image_id}")
+                        continue
+
+            # TODO: 다음 단계에서 DB 저장 로직 구현
+            return {"status": "processing_images", "image_urls": image_urls}
 
         except Exception as e:
-            # 에러 발생 시 롤백 (데이터 무결성 보장)
-            await db.rollback()
             raise e
