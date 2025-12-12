@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )  # 7일(604800)
 
     model_config = SettingsConfigDict(
-        env_file=".env.dev",
+        env_file=".env",
         extra="allow",
         populate_by_name=True,  # alias허용
         case_sensitive=True,  # 대소문자구분
@@ -63,9 +63,8 @@ class Settings(BaseSettings):
         """
         base = self.ai_detection_url.rstrip("/")
         return f"{base}/api/inference/{version}/{path}"
-    
 
-
+    # llm url은 일단 하드코딩
     # 추후 버전, 모델 변경시 수정 nutrition analysis url
     # def llm_url(self, version: str, path: str) -> str:
     #     base = self.ai_analysis_url.rstrip("/")

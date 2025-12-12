@@ -2,6 +2,7 @@ from PIL import Image
 import io
 
 # use TM's boilerplate
+# TODO: ai model input size 변경시 수정
 
 
 def resize_image(

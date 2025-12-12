@@ -21,6 +21,8 @@ from app.clients.ai_client import AIClient
 
 from app.common.image_utils import resize_image
 
+from app.clients.s3_client import S3Client
+
 
 # Meal Service
 class MealImageService:
@@ -35,7 +37,6 @@ class MealImageService:
             return image_urls
 
         # S3 Client Skeleton (활성화 시 주석 해제)
-        # from app.clients.s3_client import S3Client
 
         for image_id in tmp_image_ids:
             try:
@@ -43,10 +44,10 @@ class MealImageService:
                 tmp_path = FileManager.get_tmp_file_path(image_id)
 
                 # 2. S3 업로드 (Mocking / Skeleton)
-                # 실제 구현 시: s3_url = S3Client.upload_file(tmp_path, f"meals/{image_id}.jpg")
+                s3_url = S3Client.upload_file(tmp_path, f"meals/{image_id}.jpg")
 
-                # [Mocking] 더미 URL 생성
-                s3_url = f"https://s3.ap-northeast-2.amazonaws.com/caloreat-bucket/meals/{image_id}.jpg"
+                # # [Mocking] 더미 URL 생성
+                # s3_url = f"https://s3.ap-northeast-2.amazonaws.com/caloreat-bucket/meals/{image_id}.jpg"
                 image_urls.append(s3_url)
 
                 # 3. [Cleanup] S3 승격 완료 후 로컬 임시 파일 삭제
