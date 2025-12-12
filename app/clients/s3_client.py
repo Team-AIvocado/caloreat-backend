@@ -52,6 +52,7 @@ class S3Client:
         # return url
         pass
 
+    # admin s3 bucket 삭제기능
     @staticmethod
     def delete_file(object_name: str):
         """

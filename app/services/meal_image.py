@@ -18,7 +18,6 @@ import uuid
 from app.services.file_manager import FileManager
 from app.clients.ai_client import AIClient
 
-import os
 
 from app.common.image_utils import resize_image
 
@@ -51,8 +50,7 @@ class MealImageService:
                 image_urls.append(s3_url)
 
                 # 3. [Cleanup] S3 승격 완료 후 로컬 임시 파일 삭제
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
+                await FileManager.delete_tmp_image(tmp_path)
 
             except FileNotFoundError:
                 # 파일이 없는 경우 경고 로그 출력 후 진행
@@ -79,7 +77,7 @@ class MealImageService:
         # 3. 임시 파일 저장 (FileManager)
         image_id = str(uuid.uuid4())
         filename = f"{image_id}.{file_ext}"
-        await FileManager.save_by_bytes(resized_data, filename)
+        await FileManager.save_tmp_image(resized_data, filename)
 
         try:
             # 4. AI 감지 요청 (AIClient)
