@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     ai_detection_url: str = Field(..., alias="AI_DETECTION_URL")
     ai_analysis_url: str = Field(..., alias="AI_ANALYSIS_URL")
 
+    # AWS S3 설정
+    aws_access_key_id: str = Field(..., alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = Field(..., alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field("ap-northeast-2", alias="AWS_REGION")
+    s3_bucket_name: str = Field(..., alias="S3_BUCKET_NAME")
+
     def inference_url(self, version: str, path: str) -> str:
         """
         version: "v1", "v2", "v3", "v4"
@@ -57,6 +63,8 @@ class Settings(BaseSettings):
         """
         base = self.ai_detection_url.rstrip("/")
         return f"{base}/api/inference/{version}/{path}"
+    
+
 
     # 추후 버전, 모델 변경시 수정 nutrition analysis url
     # def llm_url(self, version: str, path: str) -> str:

@@ -119,3 +119,8 @@ terraform destroy
 ├── main.py              # FastAPI 진입점
 └── setup_infra.sh       # 인프라 간편 설치 스크립트
 ```
+
+## 백엔드 이미지 업로드 기능 추가
+
+사용자가 업로드한 음식 이미지는 서버에서 검증 후 AWS S3에 저장,
+업로드된 파일의 URL이 API 응답으로 제공됨
