@@ -1,4 +1,5 @@
 import json
+import asyncio
 import httpx
 from typing import Any, Dict, Optional
 from app.core.settings import settings
@@ -21,7 +22,7 @@ class AIClient:
 
     @staticmethod
     # v4만 실행(임시)
-    # TODO: confidence 분기 추가 필요
+    # TODO: confidence 분기 추가 필요 -> AI 모듈 내부에서 자체 처리 하는걸로? (추후 변동 가능성 있으니 나중에 컨펌 후 TODO 삭제)
     async def request_detection(
         image_data: bytes, image_id: str, content_type: str = "image/jpeg"
     ) -> Dict[str, Any]:
@@ -65,20 +66,17 @@ class AIClient:
             raise
 
     # 다중음식 영양소 분석
-    # @staticmethod
-    # async def request_analysis(foods: list[dict[str, str]]) -> dict[str, Any]:
-    #     """
-    #     LLM 서버에 감지된 음식들의 영양소 분석을 요청 (기존 리스트 방식)
-    #     """
-    #     try:
-    #         async with httpx.AsyncClient(timeout=30.0) as client:
-    #             payload = {"foods": foods}
-
-    #             response = await client.post(
-    #                 f"{settings.ai_analysis_url}/nutrition",
-    #                 json=payload,
-    #             )
-    #             response.raise_for_status()
-    #             return response.json()
-    #     except Exception:
-    #         raise
+    @staticmethod
+    async def request_analysis(foods: list[dict[str, str]]) -> dict[str, Any]:
+        """
+        LLM 서버에 감지된 음식들의 영양소 분석을 요청 (기존 리스트 방식)
+        단일 분석 API를 병렬로 호출하여 결과를 합침
+        """
+        try:
+            tasks = [
+                AIClient.request_single_analysis(item["food_name"]) for item in foods
+            ]
+            results = await asyncio.gather(*tasks)
+            return {"results": results}
+        except Exception:
+            raise
