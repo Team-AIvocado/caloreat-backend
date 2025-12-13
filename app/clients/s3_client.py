@@ -1,66 +1,70 @@
+import mimetypes
+import logging
 import boto3
-from botocore.exceptions import NoCredentialsError
-from fastapi import UploadFile
-from typing import Optional
+from botocore.exceptions import ClientError
 from app.core.settings import settings
 
-# dabin or use this skeleton
+logger = logging.getLogger(__name__)
+
+# TODO: 추후 트래픽 증가시 upload_file 내부 로직에 run_in_threadpool 적용 고려 (Non-blocking I/O)
 
 
 class S3Client:
     """
-    AWS S3와의 통신을 담당하는 클라이언트
-    이미지 업로드, 삭제 등의 기능을 제공
+    AWS S3 Client (Static Interface)
+    - 책임: S3 업로드/삭제 (인프라 계층)
+    - 특징: MealImageService에서 static하게 호출 가능하도록 설계
     """
 
-    # Boto3 클라이언트 생성 (class level or instance level)
-    # s3_client = boto3.client(
-    #     's3',
-    #     aws_access_key_id=settings.aws_access_key_id,
-    #     aws_secret_access_key=settings.aws_secret_access_key,
-    #     region_name=settings.aws_region
-    # )
+    # Boto3 Client (Lazy loading or Module level)
+    # 여기서는 매번 세션을 생성하지 않도록 클래스 레벨에서 클라이언트를 관리하거나,
+    # boto3.client를 직접 사용 (boto3는 내부적으로 커넥션 풀링 함)
+    _client = boto3.client(
+        "s3",
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key,
+        region_name=settings.aws_region,
+    )
+    _bucket = settings.s3_bucket_name
+    _region = settings.aws_region
 
-    @staticmethod
-    def upload_file(
-        file: UploadFile, object_name: Optional[str] = None
-    ) -> Optional[str]:
+    @classmethod
+    def _generate_s3_url(cls, object_name: str) -> str:
+        return f"https://{cls._bucket}.s3.{cls._region}.amazonaws.com/{object_name}"
+
+    @classmethod
+    def upload_file(cls, file_path: str, object_name: str) -> str:
         """
-        파일을 S3 버킷에 업로드하고 URL을 반환
+        파일을 S3에 업로드하고 S3 URL을 반환 (Static/Class Method)
         """
-        # 1. 파일 포인터 초기화
-        # await file.seek(0) (FastAPI UploadFile은 비동기 메서드 지원하므로 주의, boto3는 동기 라이브러리임)
-        # Boto3의 upload_fileobj는 file-like object를 받음. file.file이 file-like임.
+        # MIME 타입 추론
+        content_type, _ = mimetypes.guess_type(file_path)
+        content_type = content_type or "application/octet-stream"
 
-        # 2. 파일명 결정
-        # object_name이 없으면 file.filename 사용
+        extra_args = {"ContentType": content_type}
 
-        # 3. S3 업로드
-        # try:
-        #     s3_client.upload_fileobj(
-        #         file.file,
-        #         settings.s3_bucket_name,
-        #         object_name,
-        #         ExtraArgs={"ContentType": file.content_type}
-        #     )
-        # except NoCredentialsError:
-        #     # 자격 증명 오류 처리
-        #     return None
+        try:
+            cls._client.upload_file(
+                Filename=file_path,
+                Bucket=cls._bucket,
+                Key=object_name,
+                ExtraArgs=extra_args,
+            )
+        except ClientError as e:
+            logger.error(f"S3 upload failed: {e}")
+            raise Exception(f"S3 Upload Error: {str(e)}")
 
-        # 4. URL 생성 및 반환
-        # url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/{object_name}"
-        # return url
-        pass
+        return cls._generate_s3_url(object_name)
 
     @staticmethod
     def delete_file(object_name: str):
         """
-        S3 버킷에서 파일 삭제
+        S3 버킷에서 파일 삭제 (Admin)
         """
-        # 1. S3 삭제 요청
-        # try:
-        #     s3_client.delete_object(Bucket=settings.s3_bucket_name, Key=object_name)
-        # except Exception as e:
-        #     # 로깅 및 에러 처리
-        #     raise e
-        pass
+        try:
+            # 클래스 변수 접근을 위해 S3Client._client 사용
+            S3Client._client.delete_object(Bucket=S3Client._bucket, Key=object_name)
+        except ClientError as e:
+            logger.error(f"S3 delete failed: {e}")
+            # 필요 시 raise
+            pass
