@@ -65,8 +65,8 @@ class Settings(BaseSettings):
         # return f"{base}/api/llm/{version}/{path}"
 
     # AWS S3 설정
-    aws_access_key_id: str = Field(..., alias="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: str = Field(..., alias="AWS_SECRET_ACCESS_KEY")
+    aws_access_key_id: str | None = Field(None, alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str | None = Field(None, alias="AWS_SECRET_ACCESS_KEY")
     aws_region: str = Field("ap-northeast-2", alias="AWS_REGION")
     s3_bucket_name: str = Field(..., alias="S3_BUCKET_NAME")
 
