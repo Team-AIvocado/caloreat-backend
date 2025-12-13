@@ -1,126 +1,151 @@
 # Caloreat Backend API
 
-Caloreat 프로젝트의 백엔드 API 서버입니다. 음식 이미지를 분석하여 영양 정보를 제공하고, 사용자의 건강 상태를 관리합니다.
+**Caloreat** 프로젝트의 백엔드 서버 저장소입니다.  
+음식 이미지를 분석하여 영양 정보를 제공하고, 사용자의 건강 상태를 관리하는 RESTful API를 제공합니다.
 
-## Tech Stack
+---
 
-- **Framework**: FastAPI (Python 3.12)
-- **Database**: PostgreSQL
-- **ORM**: SQLAlchemy (Async)
-- **Migration**: Alembic
-- **Infrastructure**: AWS (ECS Fargate, ECR, RDS, ALB, S3)
-- **IaC**: Terraform
-- **CI/CD**: GitHub Actions
+## 1. Quick Start
 
-## 로컬 개발
+로컬 개발 환경 설정부터 서버 실행까지의 단계입니다.
 
-### 1. Prerequisites
+### Prerequisites
 
-- Python 3.12+
-- Docker & Docker Compose
-- [uv](https://github.com/astral-sh/uv) (Python 패키지 매니저)
+- **Python 3.12+**, **Docker** (DB 실행용), **[uv](https://github.com/astral-sh/uv)** (필수)
 
-### 2. 실행 방법 (Docker)
-
-가장 쉬운 방법은 Docker Compose를 사용하는 것입니다.
+### Installation
 
 ```bash
-# 컨테이너 빌드 및 실행
+# 1. Clone & Setup
+git clone https://github.com/Team-AIvocado/caloreat-backend.git
+cd caloreat-backend
+
+# 2. Install Dependencies
+uv sync
+
+# 3. Env Setup
+cp .env.example .env
+```
+
+> **Note**: 필수 key 값은 **[팀 디스코드 중요-자료]** 채널을 참조하세요.
+
+### Run (Local Recommended)
+
+API 서버는 로컬에서, DB는 도커로 실행합니다.
+
+```bash
+# 1. Start DB & Migrate
+docker-compose up -d db
+uv run alembic upgrade head
+
+# 2. Run API Server (Port: 8000)
+uv run uvicorn main:app --port 8000 --reload
+```
+
+> **선택사항: AI Module (Port: 8001)**  
+> 외부 Repo의 AI 서버가 필요하다면 실행하세요 (`.env`의 `AI_SERVICE_URL` 참조).
+>
+> ```bash
+> uv run uvicorn main:app --port 8001 --reload
+> ```
+
+### Run (Full Docker)
+
+```bash
 docker-compose up --build
 ```
 
-서버가 시작되면 [http://localhost:8000/docs](http://localhost:8000/docs) 에서 API 문서를 확인할 수 있습니다.
+- **API Docs**: `http://localhost:8000/docs` 또는 `[서버주소]/docs`
 
-### 3. 실행 방법 (Local)
+---
 
-로컬 환경에서 직접 실행하려면 다음 단계를 따르세요.
+## 2. Development
 
-```bash
-# 의존성 설치
-uv sync
+### Testing
 
-# 서버 실행
-uv run uvicorn main:app --port 8000 --reload
-
-# 또는
-uv run main.py
-```
-
-#### 임시 : 음식 분석을 위해 다른 분석 모듈이 필요합니다. (그룹 Org 다른 Repo 참조)
-
-```bash
-# Inference Module
-uv run uvicorn app.main:app --port 8001 --reload
-
-# LLM Module
-uv run uvicorn app.main:app --port 8002 --reload
-```
-
-### 4. 테스트 실행
+비동기 테스트를 위해 반드시 `uv run`을 사용해야 합니다.
 
 ```bash
 uv run pytest
 ```
 
-## AWS 배포
+### DB Migration
 
-이 프로젝트는 **Terraform**을 사용하여 AWS 인프라를 프로비저닝하고, **GitHub Actions**를 통해 자동 배포됩니다.
-
-### 1. 인프라 구축
-
-`infra/` 디렉토리의 Terraform 코드를 사용하여 AWS 리소스를 생성합니다.
-
-**간편 설치 스크립트 사용:**
+스키마 변경(`app/db/models`) 시 마이그레이션 파일을 생성하고 적용합니다.
 
 ```bash
-./setup_infra.sh
+# 1. Generate Revision
+uv run alembic revision --autogenerate -m "describe_changes"
+
+# 2. Apply to DB
+uv run alembic upgrade head
 ```
 
-스크립트가 실행되면 DB 비밀번호를 입력하고, Terraform이 자동으로 리소스를 생성합니다.
+---
 
-**수동 실행:**
+## 3. Overview
 
-```bash
-cd infra
-terraform init
-terraform apply
-```
+이 프로젝트는 **FastAPI (Async)** 기반의 계층형 아키텍처(Layered Architecture)를 따릅니다.
 
-### 2. 리소스 삭제 (비용 절약)
+### Key Features
 
-테스트가 끝나면 반드시 리소스를 삭제해야 요금이 청구되지 않습니다.
+- **식단 이미지 파이프라인**: 업로드 → 임시저장 → AI 감지 → S3 업로드 (TMP 파일 자동 관리)
+- **영양소 분석**: 외부 AI 서비스 연동 (음식명/영양소 추출)
+- **건강 관리**: 사용자 프로필 및 식단 로그 CRUD
 
-```bash
-cd infra
-terraform destroy
-# DB 비밀번호 입력 필요
-```
+### Architecture
 
-### 3. CI/CD 파이프라인
+1.  **Router**: 요청 파싱, 검증 (`routers/`)
+2.  **Service**: 비즈니스 로직, 트랜잭션 (`services/`)
+3.  **CRUD**: DB 접근 (`db/crud/`)
+4.  **Model**: 데이터 정의 (`db/models/`, `db/schemas/`)
 
-- **CI (`ci.yml`)**: `dev` 또는 `main` 브랜치에 푸시되면 테스트(`pytest`)가 자동으로 실행됩니다.
-- **CD (`deploy.yml`)**: `aws-test` 브랜치에 푸시되면 다음 과정이 진행됩니다.
-  1.  Docker 이미지 빌드
-  2.  AWS ECR로 이미지 푸시
-  3.  AWS ECS 서비스 업데이트 (새 이미지 배포)
-  4.  컨테이너 시작 시 `alembic upgrade head` 자동 실행 (DB 마이그레이션)
+상세 원칙: `docs/backend_design_principles.md`
 
-## Project Structure
+---
+
+## 4. Tech Stack
+
+| Category      | Technology                      | Note                          |
+| :------------ | :------------------------------ | :---------------------------- |
+| **Framework** | **FastAPI**                     | Python 3.12+                  |
+| **Manager**   | **uv**                          | Fast Python Package Installer |
+| **DB / ORM**  | **PostgreSQL** / **SQLAlchemy** | Async Session                 |
+| **Infra**     | **AWS (ECS, S3)**               | Terraform Managed             |
+
+---
+
+## 5. Infrastructure & Docs
+
+### Infrastructure
+
+AWS 리소스는 `infra/`의 Terraform 코드로 관리됩니다.
+
+> [!CAUTION]
+> **리소스 삭제 (비용 절약)**: 테스트 종료 후 반드시 리소스를 정리하세요.
+>
+> ```bash
+> cd infra && terraform destroy
+> ```
+
+### API Contract
+
+상세 명세는 노션, 실시간 테스트는 Swagger를 이용하세요.
+
+- 📄 **[API 상세 명세서 (Notion)](https://www.notion.so/Caloreat-API-2be7c000046f80d3ae69c2c9d34d5b77?source=copy_link)**
+- ⚡ **Swagger UI**: `http://localhost:8000/docs`
+
+### Project Structure
 
 ```
 .
-├── .github/workflows/   # CI/CD 설정 (ci.yml, deploy.yml)
-├── app/                 # 애플리케이션 코드 (Routers, Models, Schemas)
-├── infra/               # Terraform 인프라 코드 (main.tf)
-├── tests/               # Pytest 테스트 코드
-├── alembic/             # DB 마이그레이션 스크립트
-├── Dockerfile           # Docker 이미지 빌드 설정
-├── entrypoint.sh        # 컨테이너 시작 스크립트 (Migration + App Start)
-├── main.py              # FastAPI 진입점
-└── setup_infra.sh       # 인프라 간편 설치 스크립트
+├── .github/             # CI/CD
+├── app/
+│   ├── core/            # Config
+│   ├── db/              # Models, CRUD
+│   ├── routers/         # Endpoints
+│   └── services/        # Logic
+├── infra/               # Terraform
+├── tests/               # Pytest
+└── main.py              # Entrypoint
 ```
-
-## 백엔드 이미지 업로드 기능 추가
-
-사용자가 업로드한 음식 이미지는 서버에서 검증 후 AWS S3에 저장,
-업로드된 파일의 URL이 API 응답으로 제공됨
