@@ -121,7 +121,7 @@ async def search_foods_manual_endpoint(
 
 # 한끼(점심)에 먹는 음식(str)이 여러개임
 # inferserver request는 하나씩 낱개로
-# # TODO: DB 검색 & 없는경우 LLM Module 호출
+# # TODO: DB 검색 & 없는경우 LLM Module 호출 -> ai-server로 책임이관
 
 
 @router.post("/analyze/single", response_model=SingleAnalysisResponse)
@@ -144,11 +144,13 @@ async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
 
 
 # ===================================================
+
 # output & meal_log, item crud
 
 
-# 식단저장
-@router.post("/log")
+# -- meal_log crud --
+# image s3업로드, tmp 삭제, db저장 라우터
+@router.post("/log", response_model=MealLogRead)
 async def create_meal_log_endpoint(
     meal: MealLogCreate,
     current_user: User = Depends(get_current_user),
@@ -158,21 +160,8 @@ async def create_meal_log_endpoint(
     create_meal_log_endpoint
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
-    # Service Skeleton 호출
+    # Service호출
     return await MealLogService.create_meal_log(db, current_user.id, meal)
-
-    # # TODO: 임시 - DB 저장 구현 필요
-    # return {
-    #     "meal_type": "snack",
-    #     "eaten_at": "2025-12-04T15:09:50.409Z",
-    #     "meal_items": [
-    #         {
-    #             "foodname": "avocado",
-    #             "quantity": 100,
-    #             "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
-    #         }
-    #     ],
-    # }
 
 
 # read by date/ query
@@ -189,37 +178,6 @@ async def read_meal_log_endpoint(
     """
     user_id = current_user.id
     return await MealLogService.read_meal_log(db, user_id, date)
-
-    # TODO: 임시 - DB query 구현 필요
-    # return [
-    #     {
-    #         "id": 101,
-    #         "meal_type": "lunch",
-    #         "eaten_at": "2025-12-04T12:35:10.000Z",
-    #         "image_urls": [
-    #             "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/lunch_101.jpg"
-    #             "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/dinner_101.jpg"
-    #         ],
-    #         "created_at": "2025-12-04T12:40:00.000Z",
-    #         "meal_items": [
-    #             {
-    #                 "id": 1,
-    #                 "meal_log_id": 101,
-    #                 "foodname": "된장찌개",
-    #                 "quantity": 1,
-    #                 "nutritions": {"calories": 230, "carbs": 18},
-    #             },
-    #             {
-    #                 "id": 2,
-    #                 "meal_log_id": 101,
-    #                 "foodname": "김치",
-    #                 "quantity": 1,
-    #                 "nutritions": {"calories": 90, "carbs": 7},
-    #             },
-    #         ],
-    #     }
-    #     # image 아이디 필요
-    # ]
 
 
 # update patch -> put변경  TODO: front 데이터수정 전송방식 meal부분 변경전달필요

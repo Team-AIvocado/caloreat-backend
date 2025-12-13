@@ -38,7 +38,7 @@ class MealLogService:
     @staticmethod
     async def create_meal_log(
         db: AsyncSession, current_user_id: int, meal_create: MealLogCreate
-    ):
+    ) -> MealLogRead:
         # 1. 중복 검사 (TODO: 중복 시 409 에러 발생 로직 추가 필요)
         # - user_id, eaten_at(YYYY-MM-DD), meal_type 확인
 
@@ -48,33 +48,35 @@ class MealLogService:
             meal_create.tmp_image_ids
         )
 
-        # 3. 데이터 준비 (Pure Python Logic)
+        # 3. 데이터 준비 (Python Logic)
         log_data = meal_create.model_dump(include={"meal_type", "eaten_at"})
         log_data["user_id"] = current_user_id
         log_data["image_urls"] = image_urls
 
-        items_data = []
-        # log_id는 아직 모르지만, 객체 생성 후 할당 예정
+        # ORM Relationship 활용을 위한 items 데이터 준비 (meal_log_id 매핑 불필요)
+        items_data = [item.model_dump() for item in meal_create.meal_items]
 
         # 4. DB 트랜잭션 시작 (시스템 예외 처리)
         try:
+            # MealLog + MealItems 동시 생성 (ORM)
+            # Service에서 ID에 접근할 필요가 없어져 MissingGreenlet 원천 차단
+            new_log = await MealLogCrud.create_meal_log_db(db, log_data, items_data)
 
-            # MealLog 생성 (Flush로 ID 획득)
-            new_log = await MealLogCrud.create_meal_log_db(db, log_data)
-
-            # MealItem 데이터에 ID 매핑
-            for item in meal_create.meal_items:
-                item_dict = item.model_dump()
-                item_dict["meal_log_id"] = new_log.id
-                items_data.append(item_dict)
-
-            # MealItem 일괄 생성
-            await MealLogCrud.create_meal_items_db(db, items_data)
+            # [Fix] commit 이후에는 new_log 객체가 expire되므로, ID를 미리 추출해야 함 ★
+            # orm객체는 시한부인생임 세션닫히면 사망함
+            new_log_id = new_log.id
 
             # 트랜잭션 확정
             await db.commit()
-            await db.refresh(new_log)
-            return new_log
+
+            # re-query
+            # 생성된 ID로 전체 데이터를 다시 조회 완벽한 상태의 객체 확보: orm 스타일
+            # 미리 추출한 ID(int)를 사용하여 안전하게 조회 ★
+            created_log = await MealLogCrud.get_meal_log_by_id_db(db, new_log_id)
+
+            # 중요기능이므로 ORM -> DTO 변환 후 반환 (안정성, 협업 명시성)
+            pydantic_created_log = MealLogRead.model_validate(created_log)
+            return pydantic_created_log
 
         except Exception as e:
             await db.rollback()

@@ -4,6 +4,7 @@ from app.db.models.meal_item import MealItem
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, cast, Date, delete, CursorResult
 
+# CRUD 계층 -DB조회 by orm , relationship, query 책임
 
 # MealLog
 # 식단저장, 식단조회, 식단삭제
@@ -19,15 +20,22 @@ class MealLogCrud:
     # meal_log
     # TODO: orm handling 변경 중복방지 + 안정성증가
     @staticmethod
-    async def create_meal_log_db(db: AsyncSession, log_data: dict) -> MealLog:
+    async def create_meal_log_db(
+        db: AsyncSession, log_data: dict, items_data: list[dict]
+    ) -> MealLog:
         """
-        MealLog 레코드 생성
-        :param log_data: MealLog 모델 생성에 필요한 데이터 딕셔너리 (user_id 포함)
+        MealLog 및 연관된 MealItem 레코드 동시 생성 (ORM Relationship 활용)
+        :param log_data: MealLog 데이터
+        :param items_data: MealItem 데이터 리스트
         """
         new_log = MealLog(**log_data)
+
+        # Relationship을 통해 MealItem 객체들 연결 (Foreign Key 자동 처리) : orm 스타일
+        new_log.meal_items = [MealItem(**item) for item in items_data]
+
         db.add(new_log)
         await db.flush()  # ID 생성을 위해 flush
-        await db.refresh(new_log)
+
         return new_log
 
     # meal_item
