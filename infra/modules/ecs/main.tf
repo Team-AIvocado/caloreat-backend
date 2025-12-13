@@ -47,7 +47,8 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DB_NAME",        value = var.db_name },
         { name = "SECRET_KEY",     value = "secret_caloreat" },
         { name = "ACCESS_TOKEN_EXPIRE",  value = "900" },
-        { name = "REFRESH_TOKEN_EXPIRE", value = "604800" }
+        { name = "REFRESH_TOKEN_EXPIRE", value = "604800" },
+        { name = "AI_SERVICE_URL",       value = "http://ai.caloreat.local:8001" }
       ]
     }
   ])
