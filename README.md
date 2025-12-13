@@ -74,8 +74,8 @@ uv run pytest
 스키마 변경(`app/db/models`) 시 마이그레이션 파일을 생성하고 적용합니다.
 
 ```bash
-# 1. Generate Revision
-uv run alembic revision --autogenerate -m "describe_changes"
+# 1. Generate Revision (Message in English)
+uv run alembic revision --autogenerate -m "describe_changes_in_english"
 
 # 2. Apply to DB
 uv run alembic upgrade head
@@ -121,8 +121,7 @@ uv run alembic upgrade head
 
 AWS 리소스는 `infra/`의 Terraform 코드로 관리됩니다.
 
-> [!CAUTION]
-> **리소스 삭제 (비용 절약)**: 테스트 종료 후 반드시 리소스를 정리하세요.
+> [!CAUTION] > **리소스 삭제 (비용 절약)**: 테스트 종료 후 반드시 리소스를 정리하세요.
 >
 > ```bash
 > cd infra && terraform destroy
