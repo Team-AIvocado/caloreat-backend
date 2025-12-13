@@ -45,12 +45,9 @@ class MealImageService:
 
                 # 2. S3 업로드 (Mocking / Skeleton)
                 s3_url = S3Client.upload_file(tmp_path, f"meals/{image_id}.jpg")
-
-                # # [Mocking] 더미 URL 생성
-                # s3_url = f"https://s3.ap-northeast-2.amazonaws.com/caloreat-bucket/meals/{image_id}.jpg"
                 image_urls.append(s3_url)
 
-                # 3. [Cleanup] S3 승격 완료 후 로컬 임시 파일 삭제
+                # 3. Cleanup: S3 업로드 완료 후 로컬 임시 파일 삭제
                 await FileManager.delete_tmp_image(tmp_path)
 
             except FileNotFoundError:

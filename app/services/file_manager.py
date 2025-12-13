@@ -12,7 +12,9 @@ class FileManager:
     - 특징: 비즈니스 로직(ID생성, 리사이징) 몰라야 함, Static Interface 유지
     """
 
-    TEMP_DIR = "/tmp/caloreat_images"
+    TEMP_DIR = (
+        "/tmp/caloreat_images"  # TODO: 환경변수로 변경 필요 (도커파일추가시 경로유연성)
+    )
 
     @classmethod
     def _ensure_dir(cls):
@@ -39,14 +41,7 @@ class FileManager:
         FileManager._ensure_dir()
         file_path = os.path.join(FileManager.TEMP_DIR, filename)
 
-        # Non-blocking I/O (Threadpool 적용 가능 지점)
-        # def _write():
-        #     with open(file_path, "wb") as f:
-        #         f.write(image_data)
-        #     return file_path
-        # return await run_in_threadpool(_write)
-
-        # 현재는 단순 동기 쓰기 (트래픽 증가 시 위 코드로 교체)
+        # 현재는 단순 동기 쓰기 (TODO:트래픽 증가 시 Threadpool 적용)
         with open(file_path, "wb") as f:
             f.write(image_data)
         return file_path
@@ -70,6 +65,7 @@ class FileManager:
 
 
 # --- Legacy Validation Logic (from feat/meal-s3) ---
+# MVP 기능 구동 우선 모든 validation 비활성화
 # 추후 필요시 활성화하여 사용
 
 # ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}

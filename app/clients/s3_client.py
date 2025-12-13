@@ -6,6 +6,8 @@ from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# TODO: 추후 트래픽 증가시 upload_file 내부 로직에 run_in_threadpool 적용 고려 (Non-blocking I/O)
+
 
 class S3Client:
     """
