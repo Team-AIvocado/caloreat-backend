@@ -20,10 +20,16 @@ load_dotenv(dotenv_path=".env")
 # lifespan != migration(alembic)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # async with async_engine.begin() as conn:  # DB 연결 시작
-    #     await conn.run_sync(
-    #         Base.metadata.create_all
-    #     )  # alembic migration적용후 삭제필요
+    # Run Alembic migrations at startup
+    import subprocess
+
+    try:
+        print("Running Alembic migrations...")
+        subprocess.run(["alembic", "upgrade", "head"], check=True)
+        print("Alembic migrations completed.")
+    except Exception as e:
+        print(f"Error running Alembic migrations: {e}")
+
     yield
     await async_engine.dispose()  # DB 연결 종료
 
@@ -37,7 +43,7 @@ def read_root():
     return {"message": "Welcome to Caloreat API", "status": "ok"}
 
 
-# 배포시 서버가 제대로 살아있나 체크하는 엔드포인트. 
+# 배포시 서버가 제대로 살아있나 체크하는 엔드포인트.
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -46,7 +52,10 @@ def health_check():
 # 미들웨어 등록 (front:intercept, 토큰보안 안정성)
 # 허용할 출처 목록
 import os
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,https://caloreat-ten.vercel.app,null").split(",")
+
+origins = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:5173,https://caloreat-ten.vercel.app,null"
+).split(",")
 
 # CORS 설정
 app.add_middleware(
