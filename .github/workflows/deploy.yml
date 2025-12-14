@@ -5,6 +5,7 @@ on:
     workflows: ["Caloreat Backend CI"]
     types: [completed]
     branches: [main, deploy-temp]
+  workflow_dispatch:
 
 env:
   AWS_REGION: ap-northeast-2 # AWS 지역 설정 - 서울 = ap-northeast-2

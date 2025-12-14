@@ -75,3 +75,21 @@ resource "aws_ecs_service" "main" {
     container_port   = 8000
   }
 }
+
+# CloudWatch Alarm (CPU High)
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "caloreat-backend-cpu-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 80
+  alarm_description   = "This metric monitors ecs cpu utilization"
+  
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.main.name
+  }
+}
