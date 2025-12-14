@@ -17,14 +17,13 @@ class S3Client:
     """
 
     # Boto3 Client (Lazy loading or Module level)
-    # 여기서는 매번 세션을 생성하지 않도록 클래스 레벨에서 클라이언트를 관리하거나,
-    # boto3.client를 직접 사용 (boto3는 내부적으로 커넥션 풀링 함)
-    _client = boto3.client(
-        "s3",
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
-        region_name=settings.aws_region,
-    )
+    # IAM Role(ECS) 지원을 위해 동적으로 자격증명 처리
+    _client_kwargs = {"region_name": settings.aws_region}
+    if settings.aws_access_key_id and settings.aws_secret_access_key:
+        _client_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+        _client_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+
+    _client = boto3.client("s3", **_client_kwargs)
     _bucket = settings.s3_bucket_name
     _region = settings.aws_region
 

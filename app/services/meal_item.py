@@ -14,8 +14,10 @@ class MealItemService:
         """
         # 1. 입력 데이터 가공
         # 프론트엔드에서 전달받은 image_id를 그대로 사용하여 매핑 유지
+        # 1. 입력 데이터 가공
+        # 프론트엔드에서 단순히 문자열 리스트로 오므로 UUID 생성하여 매핑
         foods_data = [
-            {"id": item.image_id, "food_name": item.foodname} for item in foodnames
+            {"id": str(uuid.uuid4()), "food_name": name} for name in foodnames
         ]
 
         # 2. AI 서버 요청 (Analysis)

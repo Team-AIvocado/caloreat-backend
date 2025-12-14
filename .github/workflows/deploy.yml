@@ -4,15 +4,16 @@ on:
   workflow_run:
     workflows: ["Caloreat Backend CI"]
     types: [completed]
-    branches: [main]
+    branches: [main, deploy-temp]
+  workflow_dispatch:
 
 env:
-  AWS_REGION: ap-northeast-2                   # AWS 지역 설정 - 서울 = ap-northeast-2
-  ECR_REPOSITORY: caloreat-backend           # ECR 리포지토리 이름
-  ECS_SERVICE: caloreat-backend-service                 # ECS 서비스 이름
-  ECS_CLUSTER: caloreat-cluster                 # ECS 클러스터 이름
+  AWS_REGION: ap-northeast-2 # AWS 지역 설정 - 서울 = ap-northeast-2
+  ECR_REPOSITORY: caloreat-backend # ECR 리포지토리 이름
+  ECS_SERVICE: caloreat-backend-service # ECS 서비스 이름
+  ECS_CLUSTER: caloreat-cluster # ECS 클러스터 이름
   ECS_TASK_DEFINITION: .aws/task-definition.json # task definition 파일 경로
-  CONTAINER_NAME: caloreat-backend           # container 이름
+  CONTAINER_NAME: caloreat-backend # container 이름
 
 permissions:
   contents: read
@@ -46,7 +47,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
-        
+
         # Docker 컨테이너를 빌드하고
         # ECR에 푸시 -> ECS 배포 준비하기
         run: |

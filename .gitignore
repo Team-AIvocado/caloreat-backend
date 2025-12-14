@@ -194,4 +194,3 @@ pyrightconfig.json
 *.tfvars
 *tfplan
 .terraform.tfstate.lock.info
-.env.dev

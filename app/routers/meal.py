@@ -130,11 +130,13 @@ async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
     return await MealItemService.one_food_analysis(request.foodname)
 
 
-# # 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
-# @router.post("/analyze", response_model=MultiAnalysisResponse)
-# async def analyze_nutrition_endpoint(request: MultiAnalysisRequest):
-#     # Service Skeleton 호출 (List)
-#     return await MealItemService.food_analysis(request.foodnames)
+# 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
+@router.post("/analyze", response_model=MultiAnalysisResponse)
+async def analyze_nutrition_endpoint(request: MultiAnalysisRequest):
+    # Service Skeleton 호출 (List)
+    return await MealItemService.food_analysis(request.foodnames)
+
+
 # return {
 #     "results": [
 #         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
