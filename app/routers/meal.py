@@ -14,8 +14,10 @@ from app.db.schemas.meal_log import (
     MealLogCreate,
 )
 from app.db.schemas.nutrition_analysis import (
-    NutrientAnalysisResponse,
-    AnalysisRequest,
+    MultiAnalysisResponse,
+    MultiAnalysisRequest,
+    SingleAnalysisRequest,
+    SingleAnalysisResponse,
     OverrideTextResponse,
     OverrideTextRequest,
 )
@@ -25,6 +27,8 @@ from datetime import date
 
 # 서비스
 from app.services.meal_image import MealImageService
+from app.services.meal_item import MealItemService
+from app.services.meal_log import MealLogService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
@@ -41,15 +45,19 @@ async def upload_image_endpoint(
     current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
 ):
-    # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
-    return {
-        "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
-        "food_name": "된장찌개",  # response.candidates[0]["label"]
-        "candidates": [
-            {"label": "된장찌개", "confidence": 0.93},
-            {"label": "김치찌개", "confidence": 0.72},
-        ],
-    }
+    # Service Skeleton 호출
+    detection_result = await MealImageService.image_detection(file, current_user.id)
+    return detection_result
+
+    # # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
+    # return {
+    #     "image_id": "uuid",  # tmp 이미지식별용 프론트 반환 id
+    #     "food_name": "된장찌개",  # response.candidates[0]["label"]
+    #     "candidates": [
+    #         {"label": "된장찌개", "confidence": 0.93},
+    #         {"label": "김치찌개", "confidence": 0.72},
+    #     ],
+    # }
 
 
 # foodname = front state 값 db 저장x
@@ -79,9 +87,12 @@ async def override_prediction_endpoint(
 
 
 # 텍스트 입력(수동입력) # post x -> get
-@router.get("/foods/search")
-async def override_text_endpoint(
-    food: str,  # 사용자가 입력한 텍스트
+# free-text 서비스 품질 박살 (ex. 떡볶이 / 떡복이 / 떡뽂이 / 떡볶기)
+# 사용자 입력 문자열을 믿지말것
+# TODO: 입력해도 안나올시 -> llm에 보내서 음식명 추출한다던지 대안필요
+@router.get("/foods/manual")
+async def search_foods_manual_endpoint(
+    query: str,  # 사용자가 입력한 텍스트
     limit: int = 10,  # 반환 개수
     db: AsyncSession = Depends(get_db),
 ):
@@ -96,36 +107,52 @@ async def override_text_endpoint(
     all_foods = ["된장찌개", "된장국", "김치찌개", "김치볶음밥", "카레", "치킨", "김밥"]
 
     # 필터링
-    results = [f for f in all_foods if food in f][:limit]
+    results = [f for f in all_foods if query in f][:limit]
 
     # 자동완성 리스트 반환
     return {"results": results}
 
 
+# --- back client - llm server ---
 # 음식 text 영양소분석
 # 1단계 image detect/cls 에서 선택된 이미지 (아/점/저)
 # 사용자확인 전단계가 존재하므로 confidence는 생략 foodname만 전달
-#
+
+
 # 한끼(점심)에 먹는 음식(str)이 여러개임
 # inferserver request는 하나씩 낱개로
-@router.post("/analyze", response_model=NutrientAnalysisResponse)
-async def analyze_image_endpoint(foodnames: AnalysisRequest):
+# # TODO: DB 검색 & 없는경우 LLM Module 호출 -> ai-server로 책임이관
 
-    # TODO: 임시 - DB 검색 & 없는경우 LLM Module 호출
-    return {
-        "results": [
-            {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
-            {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
-        ]
-    }  # nutiritionsta
+
+@router.post("/analyze/single", response_model=SingleAnalysisResponse)
+async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
+    # Service Skeleton 호출 (Single)
+    return await MealItemService.one_food_analysis(request.foodname)
+
+
+# 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
+@router.post("/analyze", response_model=MultiAnalysisResponse)
+async def analyze_nutrition_endpoint(request: MultiAnalysisRequest):
+    # Service Skeleton 호출 (List)
+    return await MealItemService.food_analysis(request.foodnames)
+
+
+# return {
+#     "results": [
+#         {"foodname": "된장찌개", "nutritions": {"calories": 230, "carbs": 18}},
+#         {"foodname": "김치", "nutritions": {"calories": 90, "carbs": 7}},
+#     ]
+# }  # nutiritionsta
 
 
 # ===================================================
+
 # output & meal_log, item crud
 
 
-# 식단저장
-@router.post("/log")
+# -- meal_log crud --
+# image s3업로드, tmp 삭제, db저장 라우터
+@router.post("/log", response_model=MealLogRead)
 async def create_meal_log_endpoint(
     meal: MealLogCreate,
     current_user: User = Depends(get_current_user),
@@ -135,21 +162,12 @@ async def create_meal_log_endpoint(
     create_meal_log_endpoint
     meal_type: breakfast, launch, dinner, snack(opt.)
     """
-    # TODO: 임시 - DB 저장 구현 필요
-    return {
-        "meal_type": "snack",
-        "eaten_at": "2025-12-04T15:09:50.409Z",
-        "meal_items": [
-            {
-                "foodname": "avocado",
-                "quantity": 100,
-                "nutritions": {"calories": 90, "carbs": 7, "fat": 999},
-            }
-        ],
-    }
+    # Service호출
+    return await MealLogService.create_meal_log(db, current_user.id, meal)
 
 
 # read by date/ query
+# 날짜별 식단조회 아침,점심,저녁
 @router.get("/logs", response_model=list[MealLogRead])
 async def read_meal_log_endpoint(
     date: date | None = None,  # query param
@@ -160,61 +178,39 @@ async def read_meal_log_endpoint(
     ?date=2025-12-04
     example request : 2025-12-04
     """
-    # TODO: 임시 - DB query 구현 필요
-    return [
-        {
-            "id": 101,
-            "meal_type": "lunch",
-            "eaten_at": "2025-12-04T12:35:10.000Z",
-            "image_urls": [
-                "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/lunch_101.jpg"
-                "https://caloreat.s3.ap-northeast-2.amazonaws.com/images/dinner_101.jpg"
-            ],
-            "created_at": "2025-12-04T12:40:00.000Z",
-            "meal_items": [
-                {
-                    "id": 1,
-                    "meal_log_id": 101,
-                    "foodname": "된장찌개",
-                    "quantity": 1,
-                    "nutritions": {"calories": 230, "carbs": 18},
-                },
-                {
-                    "id": 2,
-                    "meal_log_id": 101,
-                    "foodname": "김치",
-                    "quantity": 1,
-                    "nutritions": {"calories": 90, "carbs": 7},
-                },
-            ],
-        }
-        # image 아이디 필요
-    ]
+    user_id = current_user.id
+    return await MealLogService.read_meal_log(db, user_id, date)
 
 
 # update patch -> put변경  TODO: front 데이터수정 전송방식 meal부분 변경전달필요
-@router.put("/log/{meal_id}")
+# update (PUT)
+@router.put("/log/{meal_id}", response_model=MealLogRead)
 async def update_meal_log_endpoint(
-    foods: list[str],
+    meal_id: int,
+    meal_update: MealLogUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    update_meal_log_endpoint
-
-    :param foods: ["foodname1","foodname2",...]
-    :type foods: list[str]
-
+    식단 수정 API (Full Replace)
+    - 본인이 작성한 식단만 수정 가능
+    - 요청 본문의 내용으로 식단을 통째로 교체
+    - 메타데이터(시간, 타입) 업데이트 (이미지 수정 불가)
+    - 음식 목록 전체 교체 (기존 삭제 -> 신규 생성)
     """
-    # TODO: 임시 - DB update 구현 필요
-    return {"message": "updated"}
+    return await MealLogService.update_meal_log(
+        db, current_user.id, meal_id, meal_update
+    )
 
 
 # delete / params: none
 @router.delete("/log/{meal_id}")
 async def delete_meal_log_endpoint(
+    meal_id: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: 임시 - DB 삭제 구현 필요
-    return {"message": "deleted"}
+) -> bool:
+    """
+    삭제 시 MealItem 자동 삭제 (ON DELETE CASCADE)
+    """
+    return await MealLogService.delete_meal_log(db, current_user.id, meal_id)  # boolean

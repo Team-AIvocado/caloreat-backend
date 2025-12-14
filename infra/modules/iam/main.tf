@@ -106,3 +106,47 @@ resource "aws_iam_role_policy_attachment" "ecs_task_role_s3_policy" {
     role       = aws_iam_role.ecs_task_role.name
     policy_arn = aws_iam_policy.s3_access_policy.arn 
 }
+
+# RDS Monitoring Role
+resource "aws_iam_role" "rds_monitoring_role" {
+  name = "caloreat-rds-monitoring-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_monitoring_role_policy" {
+  role       = aws_iam_role.rds_monitoring_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
+# CloudFront Invalidation Policy (Frontend Deploy 용)
+resource "aws_iam_policy" "cloudfront_invalidation" {
+  name        = "caloreat-cloudfront-invalidation"
+  description = "Allow CloudFront invalidation for deployment"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "cloudfront:CreateInvalidation"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach to existing caloreat-s3 user
+resource "aws_iam_user_policy_attachment" "frontend_deploy_attach" {
+  user       = "caloreat-s3"
+  policy_arn = aws_iam_policy.cloudfront_invalidation.arn
+}

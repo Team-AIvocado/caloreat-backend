@@ -9,7 +9,7 @@ from app.db.schemas.user_health_condition import (
     HealthConditionUpdate,
     HealthConditionRead,
 )
-from typing import Optional, List
+from typing import Optional
 
 
 # 건강 및 식이 제한정보 user_health_conditions
@@ -34,7 +34,7 @@ class HealthConditionCrud:
 
     # read & return list
     @staticmethod
-    async def get_all_condition_db(db: AsyncSession, user_id: int) -> List[str]:
+    async def get_all_condition_db(db: AsyncSession, user_id: int) -> list[str]:
         result = await db.execute(
             select(HealthCondition.conditions).where(HealthCondition.user_id == user_id)
         )
@@ -65,7 +65,7 @@ class HealthConditionCrud:
     @staticmethod
     async def create_all_conditions_db(
         db: AsyncSession, conditions: list[dict]
-    ) -> List[HealthCondition]:
+    ) -> list[HealthCondition]:
         db_conditions = [HealthCondition(**condition) for condition in conditions]
         db.add_all(db_conditions)  # insert 순차실행
         await db.flush()  # PK생성, DB내 query insert

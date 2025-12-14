@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from datetime import timedelta
 
@@ -21,11 +21,12 @@ class Settings(BaseSettings):
         ..., alias="REFRESH_TOKEN_EXPIRE"
     )  # 7일(604800)
 
-    class Config:
-        env_file = ".env.dev"
-        extra = "allow"
-        populate_by_name = True  # alias허용
-        case_sensitive = True  # 대소문자구분
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="allow",
+        populate_by_name=True,  # alias허용
+        case_sensitive=True,  # 대소문자구분
+    )
 
     # mysql기준 -> postgresql 변경예정
     @property
@@ -45,10 +46,29 @@ class Settings(BaseSettings):
     def refresh_token_expire(self) -> timedelta:
         return timedelta(seconds=self.refresh_token_expire_sec)
 
-    # # ai_model url
-    # @property
-    # def ai_model_url(self)->str:
-    #     pass
+    # AI Service URL
+    ai_service_url: str = Field(..., alias="AI_SERVICE_URL")
+
+    # inference url
+    def inference_url(self, version: str, path: str) -> str:
+        """
+        version: "v1", "v2", "v3", "v4"
+        path: "analyze", "analyze-url"
+        """
+        base = self.ai_service_url.rstrip("/")
+        return f"{base}/api/inference/{version}/{path}"
+
+    # llm url (nutrition analysis)
+    def llm_url(self, path: str) -> str:
+        base = self.ai_service_url.rstrip("/")
+        return f"{base}/{path}"
+        # return f"{base}/api/llm/{version}/{path}"
+
+    # AWS S3 설정
+    aws_access_key_id: str | None = Field(None, alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str | None = Field(None, alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field("ap-northeast-2", alias="AWS_REGION")
+    s3_bucket_name: str = Field(..., alias="S3_BUCKET_NAME")
 
 
 settings = Settings()

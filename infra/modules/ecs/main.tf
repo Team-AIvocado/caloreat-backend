@@ -47,7 +47,8 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DB_NAME",        value = var.db_name },
         { name = "SECRET_KEY",     value = "secret_caloreat" },
         { name = "ACCESS_TOKEN_EXPIRE",  value = "900" },
-        { name = "REFRESH_TOKEN_EXPIRE", value = "604800" }
+        { name = "REFRESH_TOKEN_EXPIRE", value = "604800" },
+        { name = "AI_SERVICE_URL",       value = "http://ai.caloreat.local:8001" }
       ]
     }
   ])
@@ -72,5 +73,23 @@ resource "aws_ecs_service" "main" {
     target_group_arn = var.target_group_arn
     container_name   = "caloreat-backend"
     container_port   = 8000
+  }
+}
+
+# CloudWatch Alarm (CPU High)
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "caloreat-backend-cpu-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 80
+  alarm_description   = "This metric monitors ecs cpu utilization"
+  
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.main.name
   }
 }

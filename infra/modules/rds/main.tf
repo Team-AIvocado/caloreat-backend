@@ -25,4 +25,9 @@ resource "aws_db_instance" "default" {
 
   vpc_security_group_ids = [var.rds_sg_id]      # ECS만 접속 가능
   db_subnet_group_name   = aws_db_subnet_group.default.name
+
+  # Monitoring
+  monitoring_interval    = 60
+  monitoring_role_arn    = var.monitoring_role_arn
+  performance_insights_enabled = true
 }

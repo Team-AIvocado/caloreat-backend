@@ -141,7 +141,14 @@ venv.bak/
 
 # mkdocs documentation
 /site
+docs/
+# Agent settings (local only)
+.agent/
+.agent/**
+*.agworkspace
 
+# AntiGravity generated files
+*.agworkspace
 # mypy
 .mypy_cache/
 .dmypy.json

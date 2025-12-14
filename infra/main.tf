@@ -22,6 +22,7 @@ module "rds" {
   subnet_ids  = module.vpc.subnet_ids   # DB가 배치될 서브넷 목록
   rds_sg_id   = module.vpc.rds_sg_id    # RDS에 적용할 Security Group
   db_password = var.db_password         # DB 비밀번호 입력
+  monitoring_role_arn = module.iam.rds_monitoring_role_arn
 }
 
 # ECS Cluster + Task Definition + Service
@@ -44,4 +45,22 @@ module "ecs" {
   db_user     = module.rds.db_username
   db_name     = module.rds.db_name
   db_password = var.db_password
+}
+
+# 예산 알림 (월 $50 초과 예상 시 이메일 전송)
+resource "aws_budgets_budget" "monthly_cost" {
+  name              = "monthly-budget-50"
+  budget_type       = "COST"
+  limit_amount      = "50"
+  limit_unit        = "USD"
+  time_period_start = "2025-12-01_00:00"
+  time_unit         = "MONTHLY"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 100
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "FORECASTED"
+    subscriber_email_addresses = ["wlsdnr710@naver.com"] # 이메일 입력
+  }
 }
