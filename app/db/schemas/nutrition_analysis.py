@@ -31,6 +31,34 @@ class SingleAnalysisRequest(BaseModel):
 #
 
 
+# ===================================================
+# LLM Response Schemas (Internal Use)
+# ===================================================
+
+
+class Micronutrients(BaseModel):
+    # Common ones
+    vitamin_c_mg: Optional[float] = None
+    calcium_mg: Optional[float] = None
+    caffeine_mg: Optional[float] = None
+    # Allow extra fields for forward compatibility with LLM
+    model_config = ConfigDict(extra="allow")
+
+
+class NutritionDetail(BaseModel):
+    calories: float
+    carbs_g: float
+    protein_g: float
+    fat_g: float
+    sugar_g: float
+    fiber_g: float
+    sodium_mg: float
+    cholesterol_mg: float
+    saturated_fat_g: float
+    micronutrients: Micronutrients = Field(default_factory=Micronutrients)
+
+
+# Image Response
 class AnalysisResult(BaseModel):
     foodname: str
     nutritions: dict

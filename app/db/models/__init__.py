@@ -10,3 +10,5 @@ from .user_health_condition import HealthCondition
 # from .meal_unused import MealImage
 from .meal_item import MealItem
 from .meal_log import MealLog
+from .food import Food
+from .nutrition import Nutrition

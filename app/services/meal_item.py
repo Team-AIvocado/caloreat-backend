@@ -1,4 +1,9 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.clients.ai_client import AIClient
+from app.db.models.food import Food
+from app.db.models.nutrition import Nutrition
+from app.db.schemas.nutrition_analysis import NutritionDetail
 import uuid
 
 
@@ -28,18 +33,100 @@ class MealItemService:
 
     # 음식한개
     @staticmethod
-    async def one_food_analysis(foodname: str):
+    async def one_food_analysis(db: AsyncSession, foodname: str):
         """
-        음식명(Str) -> AI 영양소 분석 요청
+        음식명(Str) -> AI 영양소 분석 요청 (with Caching)
         """
-        # 2. AI 서버 요청 (Analysis)
+        # 1. 캐시 조회
+        cached_data = await MealItemService._get_food_from_cache(db, foodname)
+        if cached_data:
+            return cached_data
+
+        # 2. AI 서버 요청
         analysis_result = await AIClient.request_single_analysis(foodname)
 
-        # 3. 결과 반환
+        # 3. 데이터 저장 및 캐싱
+        await MealItemService._save_new_food_cache(db, foodname, analysis_result)
+
+        # 4. 결과 반환
         return analysis_result
+
+    # ================================================================
+    # Private Helper Methods (Conflict Avoidance: Appended at bottom)
+    # ================================================================
+
+    @staticmethod
+    async def _get_food_from_cache(db: AsyncSession, foodname: str):
+        """
+        [Private] 캐시(DB)에서 음식 정보 조회
+        """
+        stmt = select(Food).where(Food.name == foodname)
+        result = await db.execute(stmt)
+        food = result.scalar_one_or_none()  # TODO: 파일 및 로직분리필요
+
+        if food and food.nutrition:
+            # DB 데이터를 API 응답(Dict) 형태로 변환
+            n = food.nutrition
+            micronutrients = n.micronutrients if n.micronutrients else {}
+
+            return {
+                "foodname": food.name,
+                "nutritions": {
+                    "calories": n.calories,
+                    "carbs_g": n.carbs_g,
+                    "protein_g": n.protein_g,
+                    "fat_g": n.fat_g,
+                    "sugar_g": n.sugar_g,
+                    "fiber_g": n.fiber_g,
+                    "sodium_mg": n.sodium_mg,
+                    "cholesterol_mg": n.cholesterol_mg,
+                    "saturated_fat_g": n.saturated_fat_g,
+                    "micronutrients": micronutrients,
+                },
+            }
+        return None
+
+    @staticmethod
+    async def _save_new_food_cache(db: AsyncSession, foodname: str, llm_result: dict):
+        """
+        [Private] LLM 응답을 DB에 저장 (캐싱)
+        """
+        nutritions_data = llm_result.get("nutritions", {})
+
+        try:
+            parsed_nutrition = NutritionDetail(**nutritions_data)
+        except Exception:
+            # 파싱 실패 시 캐싱만 건너뛰고 결과 반환
+            return llm_result
+
+        new_food = Food(name=foodname)
+        db.add(new_food)
+        await db.flush()
+
+        new_nutrition = Nutrition(
+            food_id=new_food.id,
+            source="LLM",
+            calories=parsed_nutrition.calories,
+            carbs_g=parsed_nutrition.carbs_g,
+            protein_g=parsed_nutrition.protein_g,
+            fat_g=parsed_nutrition.fat_g,
+            sugar_g=parsed_nutrition.sugar_g,
+            fiber_g=parsed_nutrition.fiber_g,
+            sodium_mg=parsed_nutrition.sodium_mg,
+            cholesterol_mg=parsed_nutrition.cholesterol_mg,
+            saturated_fat_g=parsed_nutrition.saturated_fat_g,
+            micronutrients=parsed_nutrition.micronutrients.model_dump(),
+        )
+
+        db.add(new_nutrition)
+        await db.commit()
+        await db.refresh(new_food)
+
+        return llm_result
 
     # TODO: food도메인 추가 후 food tables db저장 로직 추가 필요 (MVP범위) ->
     # 중요 ★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆
+    # ... (기존 주석 보존)
     # food도메인 현재 존재 x
     # Food : 음식별 -영양소, 이름,한글이름, 스냅샷을 정규화한 테이블사용
     # 음식의 표준 영양 정보와 메타데이터를 제공하는 마스터 기준 정보(Master Data)

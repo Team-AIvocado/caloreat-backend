@@ -125,9 +125,12 @@ async def search_foods_manual_endpoint(
 
 
 @router.post("/analyze/single", response_model=SingleAnalysisResponse)
-async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
+async def analyze_single_nutrition_endpoint(
+    request: SingleAnalysisRequest,
+    db: AsyncSession = Depends(get_db),
+):
     # Service Skeleton 호출 (Single)
-    return await MealItemService.one_food_analysis(request.foodname)
+    return await MealItemService.one_food_analysis(db, request.foodname)
 
 
 # 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
