@@ -1,11 +1,12 @@
 from app.clients.ai_client import AIClient
+from app.services.food import FoodService
 import uuid
 
 
 class MealItemService:
     # AIClient.request_analysis 호출하여 음식 리스트에 대한 영양소 분석 및 반환
     # 음식에대한 영양소개념 < 내가먹은 식단에대한 영양소 스냅샷 개념 #### TODO: food에대한 영양소테이블은 이후 추가
-
+    # TODO: 역할과 모듈 위치가 불일치함 이관필요
     @staticmethod
     async def food_analysis(foodnames: list):
         """
@@ -28,15 +29,12 @@ class MealItemService:
 
     # 음식한개
     @staticmethod
-    async def one_food_analysis(foodname: str):
+    async def one_food_analysis(db, foodname: str):
         """
         음식명(Str) -> AI 영양소 분석 요청
+        with DB Cache & Defense Logic
         """
-        # 2. AI 서버 요청 (Analysis)
-        analysis_result = await AIClient.request_single_analysis(foodname)
-
-        # 3. 결과 반환
-        return analysis_result
+        return await FoodService.get_or_create_food_from_analysis(db, foodname)
 
     # TODO: food도메인 추가 후 food tables db저장 로직 추가 필요 (MVP범위) ->
     # 중요 ★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆

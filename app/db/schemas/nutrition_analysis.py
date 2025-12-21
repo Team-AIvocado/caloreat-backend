@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -22,6 +22,15 @@ class MultiAnalysisRequest(BaseModel):
 
 class SingleAnalysisRequest(BaseModel):
     foodname: str  # 단일 음식 분석용 (문자열)
+
+    @field_validator("foodname")
+    def validate_foodname(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("음식 이름은 비어있을 수 없습니다.")
+        if len(v) > 20:
+            raise ValueError("음식 이름은 20자를 초과할 수 없습니다.")
+        return v
 
 
 # Image Response

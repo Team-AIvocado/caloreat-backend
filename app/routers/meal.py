@@ -30,6 +30,7 @@ from datetime import date
 from app.services.meal_image import MealImageService
 from app.services.meal_item import MealItemService
 from app.services.meal_log import MealLogService
+from app.services.food import FoodService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
