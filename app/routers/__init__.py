@@ -14,6 +14,8 @@ from . import stats
 
 # ai
 from . import ai_feedback
+
+# Logs
 from . import logs
 
 
@@ -35,7 +37,7 @@ router.include_router(stats.stats_router)
 router.include_router(stats.dashboard_router)
 # AI
 router.include_router(ai_feedback.router)
-# Admin
+# Logs
 router.include_router(logs.router)
 
 
