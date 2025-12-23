@@ -67,3 +67,43 @@ class S3Client:
             logger.error(f"S3 delete failed: {e}")
             # 필요 시 raise
             pass
+
+    # presigned url 생성(S3요청 boto3)
+    @classmethod
+    def generate_presigned_url(cls, object_name: str, expiration: int = 3600) -> str:
+        """
+        Private S3 객체에 접근 가능한 Presigned URL 생성
+        """
+        try:
+            response = cls._client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": cls._bucket, "Key": object_name},
+                ExpiresIn=expiration,
+            )
+            return response
+        except ClientError as e:
+            logger.error(f"S3 presigned url generation failed: {e}")
+            return ""
+
+    # DB저장된 image_url을 presigned url로 변환
+    @classmethod
+    def convert_to_presigned_url(cls, original_url: str) -> str:
+        """
+        기존 Full URL을 파싱하여 Presigned URL로 변환
+        - Key 추출 로직 포함 (Infrastructure Responsibility)
+        """
+        if not original_url:
+            return original_url
+
+        try:
+            # Extract Key from URL
+            # Assumption: URL ends with /ObjectKey (Simple logic for now)
+            # e.g., https://bucket.../meals/uuid.jpg -> meals/uuid.jpg
+            # TODO: 추후 URL 파싱 로직 강화 (urllib.parse 등 활용)
+            key = "/".join(original_url.split("/")[-2:])
+
+            signed_url = cls.generate_presigned_url(key)
+            return signed_url if signed_url else original_url
+        except Exception as e:
+            logger.warning(f"Failed to convert url: {original_url}, error: {e}")
+            return original_url

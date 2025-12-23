@@ -23,7 +23,7 @@ def test_today_summary_unauthorized(client):
 
 
 def test_day_stats_unauthorized(client):
-    response = client.get("/api/v1/stats/day?date=2025-12-06")
+    response = client.get("/api/v1/stats/daily?date=2025-12-06")
     assert response.status_code == 401
 
 
@@ -33,7 +33,7 @@ def test_day_stats_unauthorized(client):
 
 
 def test_week_stats_unauthorized(client):
-    response = client.get("/api/v1/stats/week?start_date=2025-12-01")
+    response = client.get("/api/v1/stats/weekly?start_date=2025-12-01")
     assert response.status_code == 401
 
 
@@ -43,7 +43,7 @@ def test_week_stats_unauthorized(client):
 
 
 def test_month_stats_unauthorized(client):
-    response = client.get("/api/v1/stats/month?month=12")
+    response = client.get("/api/v1/stats/monthly?month=12")
     assert response.status_code == 401
 
 
