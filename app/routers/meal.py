@@ -44,9 +44,10 @@ router = APIRouter(prefix="/meals", tags=["Meal"])
 async def upload_image_endpoint(
     current_user: User = Depends(get_current_user),
     file: UploadFile = File(None),
+    db: AsyncSession = Depends(get_db),
 ):
-    # Service Skeleton 호출
-    detection_result = await MealImageService.image_detection(file, current_user.id)
+    # 서비스 로직 호출 (DB 저장 포함)
+    detection_result = await MealImageService.image_detection(db, file, current_user.id)
     return detection_result
 
     # # TODO: 임시 - Inference or LLM 모듈 호출 & Background Task - S3 저장 구현 필요
