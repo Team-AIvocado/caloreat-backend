@@ -14,6 +14,7 @@ from . import stats
 
 # ai
 from . import ai_feedback
+from . import logs
 
 
 # from . import user_allergy
@@ -34,6 +35,8 @@ router.include_router(stats.stats_router)
 router.include_router(stats.dashboard_router)
 # AI
 router.include_router(ai_feedback.router)
+# Admin
+router.include_router(logs.router)
 
 
 # 변경: 도메인만모아서 한 객체로 반환
