@@ -6,6 +6,7 @@ from app.db.schemas.meal_image import (
     MealImageResponse,
 )
 from app.db.models.user import User
+from app.db.models.prediction_log import PredictionLog
 
 # from app.db.models.meal_unused import MealImage
 
@@ -58,7 +59,7 @@ class MealImageService:
         return image_urls
 
     @staticmethod
-    async def image_detection(file: UploadFile, current_user_id: int):
+    async def image_detection(db: AsyncSession, file: UploadFile, current_user_id: int):
         """
         이미지 업로드 -> 저장 -> AI 감지 요청
         """
@@ -79,8 +80,28 @@ class MealImageService:
 
         try:
             # 4. AI 감지 요청 (AIClient)
-            return await AIClient.request_detection(
+            response = await AIClient.request_detection(
                 resized_data, image_id, content_type
             )
+
+            # 5. MLOps 구현용 Prediction Log 저장 (실패해도 메인 로직에는 영향 없도록 예외처리)
+            try:
+                new_log = PredictionLog(
+                    image_id=image_id,
+                    user_id=current_user_id,
+                    raw_response=response,
+                    model_version="v4",  # TODO: AI response에 버전 포함되면 교체
+                )
+                db.add(new_log)
+                await db.commit()
+            except Exception as e:
+                print(f"[PredictionLog Error] Failed to save prediction log: {e}")
+                # 로그 저장은 부가 기능이므로 메인 트랜잭션을 방해하지 않게 롤백?
+                # or 별도 세션 사용? -> 일단 현재 세션 사용하되 에러시 rollback
+                # 하지만 여기서 rollback 하면 메인 로직(있는지 모르겠지만)에도 영향갈 수 있음.
+                # 현재는 SELECT나 INSERT가 위쪽에 없으므로 안전.
+                await db.rollback()
+
+            return response
         except Exception:
             raise

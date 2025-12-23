@@ -21,6 +21,7 @@ from app.db.schemas.meal_log import MealLogRead
 from app.db.schemas.meal_log import MealLogCreate, MealLogUpdate
 from app.db.crud.meal_log import MealLogCrud
 from app.services.meal_image import MealImageService
+from app.clients.s3_client import S3Client
 
 # MealLog 저장 매우 복잡
 # 1. 중복 검사
@@ -155,7 +156,21 @@ class MealLogService:
         if date is None:
             return []
 
-        return await MealLogCrud.get_meal_logs_db(db, user_id, date)
+        meal_logs = await MealLogCrud.get_meal_logs_db(db, user_id, date)
+
+        # [S3 Permission Fix]
+        # DB에 저장된 Public URL은 접근 권한이 없으므로 Presigned URL로 변환하여 반환
+        for log in meal_logs:
+            if log.image_urls:
+                signed_urls = []
+                for url in log.image_urls:
+                    # S3Client에 변환 요청 (S3Client.convert_to_presigned_url)
+                    signed_url = S3Client.convert_to_presigned_url(url)
+                    signed_urls.append(signed_url)
+
+                log.image_urls = signed_urls
+
+        return meal_logs
 
     # delete
     @staticmethod
