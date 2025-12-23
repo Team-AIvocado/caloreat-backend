@@ -18,7 +18,18 @@ from datetime import datetime, timezone
 # Mock DB Session
 @pytest.fixture
 def mock_db_session():
-    return AsyncMock()
+    session = AsyncMock()
+    # SQLAlchemy add is synchronous
+    session.add = MagicMock()
+
+    # SQLAlchemy execute is async (await session.execute(...))
+    # It returns a Result object which has synchronous methods like scalars()
+    result_mock = MagicMock()
+    result_mock.scalars.return_value.all.return_value = []
+    result_mock.scalars.return_value.first.return_value = None
+    session.execute.return_value = result_mock
+
+    return session
 
 
 # Override get_db dependency

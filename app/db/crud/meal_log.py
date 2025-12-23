@@ -3,6 +3,7 @@ from app.db.models.meal_log import MealLog
 from app.db.models.meal_item import MealItem
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, cast, Date, delete, CursorResult
+from datetime import date
 
 # CRUD 계층 -DB조회 by orm , relationship, query 책임
 
@@ -77,6 +78,23 @@ class MealLogCrud:
         return result.scalars().all()
 
     @staticmethod
+    async def get_meal_logs_by_range_db(
+        db: AsyncSession, user_id: int, start_date: date, end_date: date
+    ) -> list[MealLog]:
+        """
+        특정 기간 동안의 식단 조회
+        """
+        result = await db.execute(
+            select(MealLog)
+            .where(MealLog.user_id == user_id)
+            .where(cast(MealLog.eaten_at, Date) >= start_date)
+            .where(cast(MealLog.eaten_at, Date) <= end_date)
+            .options(selectinload(MealLog.meal_items))
+            .order_by(MealLog.eaten_at.asc())
+        )
+        return result.scalars().all()
+
+    @staticmethod
     async def get_meal_log_by_id_db(db: AsyncSession, meal_id: int) -> MealLog | None:
         """
         특정 식단 단건 조회 (MealItem 포함)
@@ -87,6 +105,27 @@ class MealLogCrud:
             .options(selectinload(MealLog.meal_items))
         )
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_first_meal_log_date_db(db: AsyncSession, user_id: int) -> date | None:
+        """
+        유저의 첫 식단 기록 날짜 조회
+        """
+        result = await db.execute(
+            select(cast(MealLog.eaten_at, Date))
+            .where(MealLog.user_id == user_id)
+            .order_by(MealLog.eaten_at.asc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+        """
+        result = await db.execute(
+            select(MealLog)
+            .where(MealLog.id == meal_id)
+            .options(selectinload(MealLog.meal_items))
+        )
+        return result.scalar_one_or_none()
+        """
 
     # --delete--
     @staticmethod
