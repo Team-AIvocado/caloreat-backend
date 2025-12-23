@@ -1,21 +1,15 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_user_id, get_current_user
+from app.core.auth import get_current_user
 from app.db.models import User
 from app.db.database import get_db
 from app.db.schemas.stats import (
+    StatsResponse,
     TodaySummary,
-    HourNutrition,
-    DayStatsResponse,
-    MonthStatsResponse,
 )
 from datetime import date
-from calendar import month
-
-# Stats
-# 읽기전용 계산 도메인
+from app.services.stats import StatsService
 
 dashboard_router = APIRouter(prefix="/dashboard", tags=["DashBoard"])
 stats_router = APIRouter(prefix="/stats", tags=["Stats"])
@@ -24,59 +18,53 @@ stats_router = APIRouter(prefix="/stats", tags=["Stats"])
 # dashboard
 @dashboard_router.get("/today", response_model=TodaySummary)
 async def get_today_summary_endpoint(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    # TODO: 임시 - DB 구현 필요 & log 데이터 확정 필요 Micro Nutrient 부분 DB구조 확정 필요
-    # return await StatsService.get_today_summary(db, user_id)
-    return {"total_calorie": 0, "carb": 0, "protein": 0, "fat": 0}
-
-
-# stats
-# 일간
-@stats_router.get("/day", response_model=DayStatsResponse)
-async def get_day_stats_endpoint(
     date: date,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # TODO: 임시 - DB 구현 필요 & 반환 형식 확정 필요
-    return {
-        "date": str(date),
-        "hourly": [],
-        "total": {"calorie": 0, "carb": 0, "protein": 0, "fat": 0},
-    }
+    # TODO: Dashboard용 요약 정보 (필요시 StatsService에 추가 구현)
+    return {"total_calorie": 0, "carb": 0, "protein": 0, "fat": 0}
 
 
-#     return { "breakfast": 300, "lunch": 500}
-
-# TODO: 시간별 추가여부
-
-
-# 주간
-@stats_router.get("/week")
-async def get_week_stats_endpoint(
-    start_date: date,
+# stats
+# 일간 통계
+@stats_router.get("/daily", response_model=StatsResponse)
+async def get_daily_stats_endpoint(
+    date: date,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
-    # return {"dates": ["01", "02"], "kcal": [30, 20]}
+    """
+    일간 영양 섭취 통계 조회
+    """
+    # StatsService를 통해 일간 데이터 계산 및 반환
+    return await StatsService.get_daily_stats(db, current_user.id, date)
 
 
-# 월간
-@stats_router.get("/month", response_model=MonthStatsResponse)
+# 주간 통계
+@stats_router.get("/weekly", response_model=StatsResponse)
+async def get_weekly_stats_endpoint(
+    startDate: date,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    주간 영양 섭취 통계 조회 (startDate부터 7일간)
+    """
+    # StatsService를 통해 주간 데이터(7일 평균) 계산 및 반환
+    return await StatsService.get_weekly_stats(db, current_user.id, startDate)
+
+
+# 월간 통계
+@stats_router.get("/monthly", response_model=StatsResponse)
 async def get_month_stats_endpoint(
-    year: int,  # 년도도 필요 할것 같아서 추가.
+    year: int,
     month: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # TODO: 임시 - DB 구현 필요 & 반환 형식 확정 필요
-    return {
-        "year": year,
-        "month": month,
-        "daily": [],
-        "total": {"calorie": 0, "carb": 0, "protein": 0, "fat": 0},
-    }
-    # return { "avg_kcal": 1800, "total_days": 30 }
+    """
+    월간 영양 섭취 통계 조회
+    """
+    # StatsService를 통해 월간 데이터(월 평균) 계산 및 반환
+    return await StatsService.get_monthly_stats(db, current_user.id, year, month)

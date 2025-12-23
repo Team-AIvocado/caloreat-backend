@@ -20,6 +20,8 @@ services:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5173:5173"
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
