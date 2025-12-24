@@ -6,6 +6,9 @@ from app.db.crud.food import FoodCrud
 from app.clients.ai_client import AIClient
 
 
+import re
+
+
 class FoodService:
     @staticmethod
     async def search_food(db: AsyncSession, query: str) -> list[Food]:
@@ -14,24 +17,29 @@ class FoodService:
         Service: ORM 객체 반환 -> Router: Pydantic 검증
         """
         # 1. DB 검색 (Happy Path)
-        return await FoodCrud.get_foods_by_name(db, query)
+        return await FoodCrud.get_foods_by_name_db(db, query)
 
     @staticmethod
     def validate_food_name(name: str) -> bool:
         """
         AI 요청 전 1차 입력 검증
-        - 최소 1글자 이상 (한글 기준, 영어는 2글자?) -> 일단 길이 1 이상 허용
-        - 최대 길이 20자 제한 (악의적 긴 입력 방지)
-        - 불필요한 특수문자만 있는 경우 등 필터링
+        - 최소 1글자, 최대 30자
+        - 허용 문자: 한글(완성형), 영어, 숫자, 공백, 기본 특수문자( -_.() )
+        - 거부 문자: 자음/모음 단독(ㅋㅋㅋ, ㅠㅠ), 이모지, 기타 특수문자
         """
         if not name or not name.strip():
             return False
-
+        # TODO: 이상문자 입력시 예외처리 필요
         cleaned = name.strip()
-        if len(cleaned) > 30:  # 넉넉하게 30자
+        if len(cleaned) > 30:
             return False
 
-        # TODO: 욕설, ㅋㅋㅋ 등 필터링 로직 추가 가능
+        # Regex: 한글(가-힣), 영문(a-zA-Z), 숫자(0-9), 공백(\s), 특수문자(-_.())
+        # 주의: ㅋㅋㅋ(ㄱ-ㅎ), ㅏㅑㅓㅕ(ㅏ-ㅣ) 등은 포함되지 않아 자동 거부됨
+        pattern = r"^[가-힣a-zA-Z0-9\s\-\_\.\(\)]+$"
+
+        if not re.match(pattern, cleaned):
+            return False
 
         return True
 
@@ -64,24 +72,23 @@ class FoodService:
     @staticmethod
     async def _get_existing_food_response(db: AsyncSession, name: str):
         """DB에서 정확히 일치하는 음식을 찾아 응답 포맷으로 반환"""
-        existing_foods = await FoodCrud.get_foods_by_name(db, name)
-        for food in existing_foods:
-            if food.foodname == name:
-                # DB 객체를 Dict 포맷으로 변환 (Frontend contract 준수)
-                # LLM Native Schema 덕분에 매핑이 직관적으로 변함
-                return {
-                    "foodname": food.foodname,
-                    "nutritions": {
-                        "calories": food.nutrition.calories if food.nutrition else 0,
-                        "carbs_g": food.nutrition.carbs_g if food.nutrition else 0,
-                        "protein_g": food.nutrition.protein_g if food.nutrition else 0,
-                        "fat_g": food.nutrition.fat_g if food.nutrition else 0,
-                        "sugar_g": food.nutrition.sugar_g if food.nutrition else 0,
-                        "fiber_g": food.nutrition.fiber_g if food.nutrition else 0,
-                        "sodium_mg": food.nutrition.sodium_mg if food.nutrition else 0,
-                        # 필요한 경우 추가 필드 계속 매핑
-                    },
-                }
+        # Exact Match + Nutrition Load
+        food = await FoodCrud.get_food_with_nutrition_by_name_db(db, name)
+
+        if food:
+            # DB 객체를 Dict 포맷으로 변환 (Frontend contract 준수)
+            return {
+                "foodname": food.foodname,
+                "nutritions": {
+                    "calories": food.nutrition.calories if food.nutrition else 0,
+                    "carbs_g": food.nutrition.carbs_g if food.nutrition else 0,
+                    "protein_g": food.nutrition.protein_g if food.nutrition else 0,
+                    "fat_g": food.nutrition.fat_g if food.nutrition else 0,
+                    "sugar_g": food.nutrition.sugar_g if food.nutrition else 0,
+                    "fiber_g": food.nutrition.fiber_g if food.nutrition else 0,
+                    "sodium_mg": food.nutrition.sodium_mg if food.nutrition else 0,
+                },
+            }
         return None
 
     @staticmethod
@@ -134,7 +141,7 @@ class FoodService:
             return existing
 
         # 최종 저장
-        await FoodCrud.create_food_with_nutrition(
+        await FoodCrud.create_food_with_nutrition_db(
             db, corrected_name, nutritions, source=source
         )
 

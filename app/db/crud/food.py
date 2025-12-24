@@ -4,13 +4,17 @@ from app.db.models.food import Food
 from app.db.models.nutrition import Nutrition
 
 
+from sqlalchemy.orm import selectinload
+
+
 class FoodCrud:
     @staticmethod
-    async def get_foods_by_name(
+    async def get_foods_by_name_db(
         db: AsyncSession, query: str, limit: int = 50
     ) -> list[Food]:
         """
         음식 이름 검색 (ILIKE)
+        Lightweight: No joins, just names.
         """
         # name -> foodname 변경
         result = await db.execute(
@@ -19,7 +23,23 @@ class FoodCrud:
         return result.scalars().all()
 
     @staticmethod
-    async def create_food(db: AsyncSession, foodname: str, source: str = "llm") -> Food:
+    async def get_food_with_nutrition_by_name_db(
+        db: AsyncSession, name: str
+    ) -> Food | None:
+        """
+        정확한 이름 일치 조회 + 영양소 함께 로딩 (For Analysis Logic)
+        """
+        result = await db.execute(
+            select(Food)
+            .options(selectinload(Food.nutrition))
+            .where(Food.foodname == name)  # Exact match
+        )
+        return result.scalars().first()
+
+    @staticmethod
+    async def create_food_db(
+        db: AsyncSession, foodname: str, source: str = "llm"
+    ) -> Food:
         """
         음식 생성 (Get-Or-Create 전략의 Create 부분)
         """
@@ -32,7 +52,7 @@ class FoodCrud:
 
     # db에 없는 새로운 음식이름일 경우 create
     @staticmethod
-    async def create_food_with_nutrition(
+    async def create_food_with_nutrition_db(
         db: AsyncSession,
         foodname: str,
         nutrition_data: dict,
