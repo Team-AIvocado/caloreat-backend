@@ -195,5 +195,6 @@ pyrightconfig.json
 *tfplan
 .terraform.tfstate.lock.info
 
-# seeding용 데이터셋 폴더
+# seeding용 데이터셋 & 로그
 samples/*
+dataset_*.csv
