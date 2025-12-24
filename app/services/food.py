@@ -38,8 +38,7 @@ class FoodService:
     @staticmethod
     async def get_or_create_food_from_analysis(db: AsyncSession, foodname: str):
         """
-        [Isolated Logic] 음식 분석 및 저장
-        Refactored to Main Flow:
+        음식 분석 및 저장
         1. DB Check (Exact Match)
         2. LLM Analysis (with Defense)
         3. Save (Standardized)
@@ -56,7 +55,9 @@ class FoodService:
             return analysis_result
 
         # 3. DB 저장 (Standardized Name)
-        return await FoodService._save_standardized_food(db, analysis_result)
+        return await FoodService._save_standardized_food(
+            db, analysis_result, source="llm"
+        )
 
     # --- Helper Methods ---
 
@@ -65,14 +66,20 @@ class FoodService:
         """DB에서 정확히 일치하는 음식을 찾아 응답 포맷으로 반환"""
         existing_foods = await FoodCrud.get_foods_by_name(db, name)
         for food in existing_foods:
-            if food.name == name:
+            if food.foodname == name:
+                # DB 객체를 Dict 포맷으로 변환 (Frontend contract 준수)
+                # LLM Native Schema 덕분에 매핑이 직관적으로 변함
                 return {
-                    "foodname": food.name,
+                    "foodname": food.foodname,
                     "nutritions": {
                         "calories": food.nutrition.calories if food.nutrition else 0,
-                        "carbs": food.nutrition.carbohydrate if food.nutrition else 0,
-                        "protein": food.nutrition.protein if food.nutrition else 0,
-                        "fat": food.nutrition.fat if food.nutrition else 0,
+                        "carbs_g": food.nutrition.carbs_g if food.nutrition else 0,
+                        "protein_g": food.nutrition.protein_g if food.nutrition else 0,
+                        "fat_g": food.nutrition.fat_g if food.nutrition else 0,
+                        "sugar_g": food.nutrition.sugar_g if food.nutrition else 0,
+                        "fiber_g": food.nutrition.fiber_g if food.nutrition else 0,
+                        "sodium_mg": food.nutrition.sodium_mg if food.nutrition else 0,
+                        # 필요한 경우 추가 필드 계속 매핑
                     },
                 }
         return None
@@ -80,15 +87,14 @@ class FoodService:
     @staticmethod
     async def _analyze_and_validate(foodname: str) -> dict:
         """LLM 분석 요청 및 Input/Output 방어 로직 수행"""
-        # 1. Input Defense (1차)
+        # 1. 입력 검증 (1차)
         if not FoodService.validate_food_name(foodname):
             return {"foodname": foodname, "nutritions": {}}
 
-        # 2. Analysis Request
+        # 2. 분석 요청
         analysis_result = await AIClient.request_single_analysis(foodname)
 
-        # 3. Output Validation (2차)
-        # Type Check & Extraction
+        # 3. 검증 및 속성추출
         if hasattr(analysis_result, "nutritions"):
             nutritions = analysis_result.nutritions
             corrected_name = analysis_result.foodname
@@ -96,38 +102,40 @@ class FoodService:
             nutritions = analysis_result.get("nutritions", {})
             corrected_name = analysis_result.get("foodname", foodname)
 
-        # Data Integrity Check (Zero check)
+        # 유효성 검증
         is_valid_food = any(
             float(nutritions.get(k, 0) or 0) > 0
-            for k in ["calories", "carbs", "protein", "fat"]
+            for k in ["calories", "carbs_g", "protein_g", "fat_g"]
         ) and all(
             float(nutritions.get(k, 0) or 0) >= 0
-            for k in ["calories", "carbs", "protein", "fat"]
+            for k in ["calories", "carbs_g", "protein_g", "fat_g"]
         )
 
         if not is_valid_food:
             return {"foodname": foodname, "nutritions": {}}
 
-        # Return valid dictionary for next step
         return {
             "foodname": corrected_name,  # Standardized name from LLM
             "nutritions": nutritions,
         }
 
     @staticmethod
-    async def _save_standardized_food(db: AsyncSession, analysis_data: dict):
+    async def _save_standardized_food(
+        db: AsyncSession, analysis_data: dict, source: str = "llm"
+    ):
         """정제된 이름으로 중복 체크 후 저장"""
         corrected_name = analysis_data["foodname"]
         nutritions = analysis_data["nutritions"]
 
-        # 4-1. 저장 전, 정제된 이름으로 재확인 (Race Condition / Synonym 방어)
-        # 예: "떡뽂이"(Input) -> "떡볶이"(Analyzed) -> DB에 "떡볶이"가 있는지 확인
+        # 중복 체크
         if existing := await FoodService._get_existing_food_response(
             db, corrected_name
         ):
             return existing
 
-        # 4-2. 최종 저장
-        await FoodCrud.create_food_with_nutrition(db, corrected_name, nutritions)
+        # 최종 저장
+        await FoodCrud.create_food_with_nutrition(
+            db, corrected_name, nutritions, source=source
+        )
 
         return analysis_data

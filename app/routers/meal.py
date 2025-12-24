@@ -92,7 +92,7 @@ async def override_prediction_endpoint(
 # 텍스트 입력(수동입력) # post x -> get
 # free-text 서비스 품질 박살 (ex. 떡볶이 / 떡복이 / 떡뽂이 / 떡볶기)
 # 사용자 입력 문자열을 믿지말것
-# TODO: 입력해도 안나올시 -> llm에 보내서 음식명 추출한다던지 대안필요
+# 음식입력시 검색기능 추가
 @router.get("/foods/manual", response_model=list[FoodRead])
 async def search_foods_manual_endpoint(
     query: str,

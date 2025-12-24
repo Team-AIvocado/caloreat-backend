@@ -1,12 +1,14 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 # request pydantic 추가필요
 
 
 # --response--
+
+
 class FoodRead(BaseModel):
     id: int
-    name: str
+    foodname: str
 
-
-# TODO: food_db 연결 후 삭제
+    class Config:
+        from_attributes = True
