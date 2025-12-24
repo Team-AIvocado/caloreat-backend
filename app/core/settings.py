@@ -70,5 +70,21 @@ class Settings(BaseSettings):
     aws_region: str = Field("ap-northeast-2", alias="AWS_REGION")
     s3_bucket_name: str = Field(..., alias="S3_BUCKET_NAME")
 
+    # Google OAuth 설정
+    google_client_id: str | None = Field(None, alias="GOOGLE_CLIENT_ID")
+    google_client_secret: str | None = Field(None, alias="GOOGLE_CLIENT_SECRET")
+    google_redirect_uri: str = Field(
+        "http://localhost:8000/api/v1/auth/google/callback",
+        alias="GOOGLE_REDIRECT_URI"
+    )
+
+    # Kakao OAuth 설정
+    kakao_client_id: str | None = Field(None, alias="KAKAO_CLIENT_ID")
+    kakao_client_secret: str | None = Field(None, alias="KAKAO_CLIENT_SECRET")
+    kakao_redirect_uri: str = Field(
+        "http://localhost:8000/api/v1/auth/kakao/callback",
+        alias="KAKAO_REDIRECT_URI"
+    )
+
 
 settings = Settings()

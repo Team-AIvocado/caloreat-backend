@@ -17,8 +17,12 @@ from . import ai_feedback
 
 # Nutrition
 from . import nutrition
+
 # Logs
 from . import logs
+
+# OAuth
+from . import oauth
 
 
 # from . import user_allergy
@@ -43,6 +47,8 @@ router.include_router(ai_feedback.router)
 router.include_router(nutrition.router)
 # Logs
 router.include_router(logs.router)
+# OAuth
+router.include_router(oauth.router)
 
 
 # 변경: 도메인만모아서 한 객체로 반환

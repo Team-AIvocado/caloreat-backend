@@ -73,6 +73,18 @@ wheels = [
 ]
 
 [[package]]
+name = "authlib"
+version = "1.6.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bb/9b/b1661026ff24bc641b76b78c5222d614776b0c085bcfdac9bd15a1cb4b35/authlib-1.6.6.tar.gz", hash = "sha256:45770e8e056d0f283451d9996fbb59b70d45722b45d854d58f32878d0a40c38e", size = 164894, upload-time = "2025-12-12T08:01:41.464Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/51/321e821856452f7386c4e9df866f196720b1ad0c5ea1623ea7399969ae3b/authlib-1.6.6-py2.py3-none-any.whl", hash = "sha256:7d9e9bc535c13974313a87f53e8430eb6ea3d1cf6ae4f6efcd793f2e949143fd", size = 244005, upload-time = "2025-12-12T08:01:40.209Z" },
+]
+
+[[package]]
 name = "backend"
 version = "0.1.0"
 source = { virtual = "." }
@@ -82,6 +94,7 @@ dependencies = [
     { name = "annotated-types" },
     { name = "anyio" },
     { name = "asyncpg" },
+    { name = "authlib" },
     { name = "bcrypt" },
     { name = "boto3" },
     { name = "cffi" },
@@ -93,6 +106,7 @@ dependencies = [
     { name = "h2" },
     { name = "hpack" },
     { name = "httpx" },
+    { name = "httpx-oauth" },
     { name = "hyperframe" },
     { name = "idna" },
     { name = "pillow" },
@@ -126,6 +140,7 @@ requires-dist = [
     { name = "annotated-types", specifier = "==0.7.0" },
     { name = "anyio", specifier = "==4.11.0" },
     { name = "asyncpg", specifier = "==0.30.0" },
+    { name = "authlib", specifier = ">=1.6.6" },
     { name = "bcrypt", specifier = "==4.0.1" },
     { name = "boto3", specifier = ">=1.34.0" },
     { name = "cffi", specifier = "==2.0.0" },
@@ -137,6 +152,7 @@ requires-dist = [
     { name = "h2", specifier = "==4.3.0" },
     { name = "hpack", specifier = "==4.1.0" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx-oauth", specifier = ">=0.16.1" },
     { name = "hyperframe", specifier = "==6.1.0" },
     { name = "idna", specifier = "==3.11" },
     { name = "pillow", specifier = ">=12.0.0" },
@@ -486,6 +502,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[[package]]
+name = "httpx-oauth"
+version = "0.16.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/07/db4ad128da3926be22eec586aa87dafd8840c9eb03fe88505fbed016b5c6/httpx_oauth-0.16.1.tar.gz", hash = "sha256:7402f061f860abc092ea4f5c90acfc576a40bbb79633c1d2920f1ca282c296ee", size = 44148, upload-time = "2024-12-20T07:23:02.589Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/4b/2b81e876abf77b4af3372aff731f4f6722840ebc7dcfd85778eaba271733/httpx_oauth-0.16.1-py3-none-any.whl", hash = "sha256:2fcad82f80f28d0473a0fc4b4eda223dc952050af7e3a8c8781342d850f09fb5", size = 38056, upload-time = "2024-12-20T07:23:00.394Z" },
 ]
 
 [[package]]

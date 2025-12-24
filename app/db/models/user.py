@@ -33,8 +33,8 @@ class User(Base):
         String(50), unique=True, nullable=False  # VARCHAR  # UNIQUE  # NOT NULL
     )
 
-    password = Column(  # passowrd Query
-        String(255), nullable=False  # VARCHAR  # NOT NULL
+    password = Column(  # password Query
+        String(255), nullable=True  # VARCHAR  # NULL (소셜 로그인 유저는 비밀번호 없음)
     )
     nickname = Column(String(50), nullable=True)
 
@@ -61,12 +61,12 @@ class User(Base):
     #     onupdate=lambda: datetime.now(timezone.utc)
     # )
 
-    # social 연동시 활성화
-    # provider = Column(       # provider Query
-    #     String(50),          # VARCHAR
-    #     nullable=False,      # NOT NULL
-    #     default="Email"      # DEFAULT "Email" -> 이메일 문자열
-    # )
+    # 소셜 로그인 제공자 (local, google, kakao 등)
+    provider = Column(
+        String(50),
+        nullable=False,
+        default="local"
+    )
 
     # ===================================================
     # 최소기능구현 후 확장
