@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.auth import get_current_user, get_user_id
+from app.core.auth import get_current_user, get_user_id, get_current_user_optional
 from app.db.schemas.user import (
     UserRead,
     UserCreate,
@@ -70,6 +70,12 @@ async def login(
         response, access_token, refresh_token
     )  # token은 body x 쿠키로 관리(localstorage 필요 x)/ CSRF 취약점 존재
     return db_user
+
+
+# 인증 상태 확인 (401 대신 null 반환 - 프론트엔드 초기 로딩용)
+@router.get("/me/check", response_model=UserRead | None, summary="인증 상태 확인")
+async def check_auth(current_user=Depends(get_current_user_optional)):
+    return current_user
 
 
 # 사용자 조회 (현재로그인된 사용자 본인 정보조회)

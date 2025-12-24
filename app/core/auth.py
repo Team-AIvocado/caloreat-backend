@@ -74,13 +74,16 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
     # jwt 검증
 
 
-# token based uesr identification
-# #로그인 여부 optional api - 필요시 활성화 후 추가
-# async def get_user_id_option(request:Request):
-#     access_token=request.cookies.get("access_token")
-#     if not access_token:
-#         return None
-#     try:
-#         return verify_token(access_token)
-#     except InvalidTokenError:
-#         return None
+# 로그인 여부 optional api - 401 대신 None 반환
+async def get_current_user_optional(
+    request: Request, db: AsyncSession = Depends(get_db)
+):
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        return None
+    try:
+        user_id = int(verify_token(access_token))
+        current_user = await UserCrud.get_user_by_id(db, user_id)
+        return current_user
+    except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
+        return None
