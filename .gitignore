@@ -194,3 +194,6 @@ pyrightconfig.json
 *.tfvars
 *tfplan
 .terraform.tfstate.lock.info
+
+# seeding용 데이터셋 폴더
+samples/*
