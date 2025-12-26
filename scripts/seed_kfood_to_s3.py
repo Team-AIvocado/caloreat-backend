@@ -48,9 +48,12 @@ s3_client = boto3.client(
 )
 bucket_name = settings.s3_bucket_name
 
+# Concurrency Limit
+CONCURRENCY_LIMIT = 50
+
 
 def upload_to_s3(file_obj, object_name: str, content_type: str) -> str:
-    """Stream upload directly to S3"""
+    """Stream upload directly to S3 (Blocking)"""
     try:
         s3_client.upload_fileobj(
             Fileobj=file_obj,
@@ -58,7 +61,6 @@ def upload_to_s3(file_obj, object_name: str, content_type: str) -> str:
             Key=object_name,
             ExtraArgs={"ContentType": content_type},
         )
-        # Assuming public access or using as internal URL reference
         return f"https://{bucket_name}.s3.{settings.aws_region}.amazonaws.com/{object_name}"
     except Exception as e:
         print(f"[S3 Error] {e}")
@@ -77,7 +79,7 @@ async def request_ai_inference(
         files = {"image": (filename, image_bytes, content_type)}
         data = {"image_id": image_id}
 
-        timeout = httpx.Timeout(30.0, connect=10.0)
+        timeout = httpx.Timeout(60.0, connect=10.0)
         async with httpx.AsyncClient(timeout=timeout) as client:
             target_url = f"{ai_url.rstrip('/')}/api/inference/v4/analyze"
             response = await client.post(target_url, data=data, files=files)
@@ -106,7 +108,7 @@ async def get_or_create_dummy_users(session: AsyncSession, count: int = 5) -> li
     if needed > 0:
         print(f"[Info] Creating {needed} additional dummy users...")
         for i in range(needed):
-            idx = len(user_ids) + 1 + i  # simple index
+            idx = len(user_ids) + 1 + i
             email = f"mlops_tester_{idx}_{uuid.uuid4().hex[:4]}@example.com"
             new_user = User(
                 email=email,
@@ -124,17 +126,95 @@ async def get_or_create_dummy_users(session: AsyncSession, count: int = 5) -> li
     return user_ids
 
 
+async def process_single_image(
+    semaphore: asyncio.Semaphore,
+    file_bytes: bytes,
+    file_path: str,
+    inner_zip_path: str,
+    user_ids: list[int],
+    ai_url: str,
+) -> bool:
+    """
+    단일 이미지 처리를 수행하는 Task 함수 (Parallel)
+    """
+    async with semaphore:
+        try:
+            filename = os.path.basename(file_path)
+
+            # 카테고리명 추출
+            parts = file_path.split("/")
+            if len(parts) > 1:
+                food_name = parts[-2]
+            else:
+                food_name = os.path.basename(inner_zip_path).replace(".zip", "")
+
+            if not food_name:
+                return False
+
+            current_user_id = random.choice(user_ids)
+            image_uuid = str(uuid.uuid4())
+            ext = os.path.splitext(filename)[1].lower()
+            content_type = (
+                mimetypes.guess_type(filename)[0] or "application/octet-stream"
+            )
+            object_name = f"meals/kfood_dataset/{food_name}/{image_uuid}{ext}"
+
+            print(f"   -> Processing {food_name}: {filename}")
+
+            # 1. S3 Upload (Run in Thread Pool to avoid blocking)
+            loop = asyncio.get_running_loop()
+            s3_url = await loop.run_in_executor(
+                None, upload_to_s3, io.BytesIO(file_bytes), object_name, content_type
+            )
+
+            if not s3_url:
+                return False
+
+            # 2. Real AI Inference
+            ai_response = await request_ai_inference(
+                file_bytes, image_uuid, content_type, ai_url
+            )
+
+            # 3. DB Save (Create NEW Session for thread safety in async tasks)
+            async with AsyncSessionLocal() as session:
+                pl = PredictionLog(
+                    image_id=image_uuid,
+                    user_id=current_user_id,
+                    raw_response=ai_response,
+                    model_version="v4-real",
+                )
+                session.add(pl)
+
+                ml = MealLog(
+                    user_id=current_user_id,
+                    meal_type="Lunch",
+                    eaten_at=datetime.now(timezone.utc),
+                    image_urls=[s3_url],
+                )
+                mi = MealItem(foodname=food_name, quantity=1.0, nutritions={})
+                ml.meal_items.append(mi)
+                session.add(ml)
+                await session.commit()
+
+            return True
+
+        except Exception as e:
+            print(f"[Error] Failed to process {file_path}: {e}")
+            return False
+
+
 async def process_inner_zip(
     inner_zip_path: str,
     max_images_per_zip: int,
-    session: AsyncSession,
     user_ids: list[int],
     ai_url: str,
 ):
     """
-    내부 zip 파일(예: 김치.zip)을 열어서 이미지 처리
+    내부 zip 파일 처리 (Parallel Dispatch)
     """
     processed_count = 0
+    semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)
+    tasks = []
 
     try:
         with zipfile.ZipFile(inner_zip_path, "r") as z:
@@ -146,73 +226,37 @@ async def process_inner_zip(
             ]
             random.shuffle(image_files)
 
-            for file_path in image_files:
-                if processed_count >= max_images_per_zip:
-                    break
+            # Limit files BEFORE reading
+            target_files = image_files[:max_images_per_zip]
 
-                parts = file_path.split("/")
-                if len(parts) > 1:
-                    food_name = parts[-2]
-                else:
-                    food_name = os.path.basename(inner_zip_path).replace(".zip", "")
+            print(
+                f"   [Batch] Spawning {len(target_files)} tasks for {os.path.basename(inner_zip_path)}..."
+            )
 
-                if not food_name:
-                    continue
+            for file_path in target_files:
+                # Read bytes SEQUENTIALLY (Safe)
+                try:
+                    with z.open(file_path) as source_file:
+                        file_bytes = source_file.read()
 
-                current_user_id = random.choice(user_ids)
+                    # Spawn Task
+                    task = asyncio.create_task(
+                        process_single_image(
+                            semaphore,
+                            file_bytes,
+                            file_path,
+                            inner_zip_path,
+                            user_ids,
+                            ai_url,
+                        )
+                    )
+                    tasks.append(task)
+                except Exception as e:
+                    print(f"   [Read Error] {file_path}: {e}")
 
-                filename = os.path.basename(file_path)
-                image_uuid = str(uuid.uuid4())
-                ext = os.path.splitext(filename)[1].lower()
-                content_type = (
-                    mimetypes.guess_type(filename)[0] or "application/octet-stream"
-                )
-
-                # S3 Key
-                object_name = f"meals/kfood_dataset/{food_name}/{image_uuid}{ext}"
-
-                print(
-                    f"   -> Processing {food_name}: {filename} (User: {current_user_id})"
-                )
-
-                # Read File Bytes ONCE
-                with z.open(file_path) as source_file:
-                    file_bytes = source_file.read()
-
-                # 1. S3 Upload (using BytesIO)
-                s3_url = upload_to_s3(io.BytesIO(file_bytes), object_name, content_type)
-
-                if not s3_url:
-                    continue
-
-                # 2. Real AI Inference
-                ai_response = await request_ai_inference(
-                    file_bytes, image_uuid, content_type, ai_url
-                )
-
-                # PredictionLog
-                pl = PredictionLog(
-                    image_id=image_uuid,
-                    user_id=current_user_id,
-                    raw_response=ai_response,  # SAVE REAL RESPONSE
-                    model_version="v4-real",
-                )
-                session.add(pl)
-
-                # MealLog (Ground Truth)
-                ml = MealLog(
-                    user_id=current_user_id,
-                    meal_type="Lunch",
-                    eaten_at=datetime.now(timezone.utc),
-                    image_urls=[s3_url],
-                )
-                # MealItem
-                mi = MealItem(foodname=food_name, quantity=1.0, nutritions={})
-                ml.meal_items.append(mi)
-                session.add(ml)
-
-                await session.commit()
-                processed_count += 1
+        # Wait for all tasks to finish
+        results = await asyncio.gather(*tasks)
+        processed_count = sum(1 for r in results if r)
 
     except zipfile.BadZipFile:
         print(f"   [Error] Bad zip file: {inner_zip_path}")
@@ -236,12 +280,15 @@ async def seed_from_nested_zip(
 
     total_processed = 0
 
+    # Main Session for User Setup Only
     async with AsyncSessionLocal() as session:
         if not dry_run:
             user_ids = await get_or_create_dummy_users(session, count=5)
         else:
             user_ids = [0]
 
+    # Process Zips
+    try:
         with zipfile.ZipFile(root_zip_path, "r") as root_z:
             inner_zips = [f for f in root_z.namelist() if f.lower().endswith(".zip")]
             print(f"[Info] Found {len(inner_zips)} category zip files.")
@@ -265,7 +312,7 @@ async def seed_from_nested_zip(
                 except:
                     decoded_name = inner_zip_name
 
-                print(f"[Processing Category] {decoded_name} ...")
+                print(f"[Processing Category] {decoded_name} (Parallel)...")
 
                 extract_path = os.path.join(temp_dir, decoded_name)
                 os.makedirs(os.path.dirname(extract_path), exist_ok=True)
@@ -274,18 +321,21 @@ async def seed_from_nested_zip(
                     shutil.copyfileobj(zf, f)
 
                 if not dry_run:
+                    # Note: session argument removed, passing just user_ids
                     count = await process_inner_zip(
-                        extract_path, limit_per_zip, session, user_ids, ai_url
+                        extract_path, limit_per_zip, user_ids, ai_url
                     )
                     total_processed += count
                 else:
-                    print(
-                        f"   [Dry Run] Extracted {inner_zip_name}, would process ~{limit_per_zip} images."
-                    )
+                    print(f"   [Dry Run] Extracted {decoded_name}")
 
                 os.remove(extract_path)
+    except Exception as e:
+        print(f"[Critical Error] Main loop crash: {e}")
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
-    shutil.rmtree(temp_dir)
     print(f"[Done] Total {total_processed} images seeded.")
 
 
@@ -294,7 +344,6 @@ if __name__ == "__main__":
     parser.add_argument("--zip-path", required=True)
     parser.add_argument("--max-images", type=int, default=50)
     parser.add_argument("--dry-run", action="store_true")
-    # AI Service URL Default
     parser.add_argument(
         "--ai-url", default="http://localhost:8001", help="AI Service Base URL"
     )
