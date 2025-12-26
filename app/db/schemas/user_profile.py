@@ -21,8 +21,8 @@ class GoalType(str, Enum):
 class UserProfileBase(BaseModel):
     gender: str  #  male ,  female
     birthdate: date | None = None  # immutable / age = mutable
-    height: float | None = None
-    weight: float | None = None
+    height: float | None = Field(None, gt=90, le=300)  # 가장 키큰사람 251cm
+    weight: float | None = Field(None, gt=25, le=650)  # 가장 무거운사람 635kg
     goal_type: GoalType | None = None  # 미정 (직접입력, select선택)
 
 
@@ -31,11 +31,11 @@ class UserProfileCreate(UserProfileBase):
 
 
 class UserProfileUpdate(BaseModel):
-    height: float | None = None
-    weight: float | None = None
+    height: float | None = Field(None, gt=90, le=300)
+    weight: float | None = Field(None, gt=25, le=650)
     goal_type: GoalType | None = None
 
-    # gender: str | None = None # TODO: 성별은 수정하면안됨?(성전환고려?...)
+    # gender: str | None = None
 
 
 # --- response schema ---
@@ -61,8 +61,8 @@ class ProfileFormBase(BaseModel):
     # nickname: str
     gender: str  #  male ,  female
     birthdate: date | None = None  # immutable / age = mutable
-    height: float | None = None
-    weight: float | None = None
+    height: float | None = Field(None, gt=90, le=300)
+    weight: float | None = Field(None, gt=25, le=650)
     goal_type: GoalType | None = None  # 미정 (직접입력, select선택)
 
 
@@ -74,8 +74,8 @@ class ProfileFormCreate(ProfileFormBase):
 
 # request = response 동시사용
 class ProfileFormUpdate(BaseModel):
-    height: float | None = None
-    weight: float | None = None
+    height: float | None = Field(None, gt=90, le=300)
+    weight: float | None = Field(None, gt=25, le=650)
     goal_type: GoalType | None = None
     conditions: list[str] | None = None
 
