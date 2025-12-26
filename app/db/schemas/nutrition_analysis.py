@@ -17,7 +17,7 @@ class AnalysisItem(BaseModel):
 
 
 class MultiAnalysisRequest(BaseModel):
-    foodnames: list[str]
+    foodnames: list[AnalysisItem]
 
 
 class SingleAnalysisRequest(BaseModel):
