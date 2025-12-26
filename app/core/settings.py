@@ -85,6 +85,7 @@ class Settings(BaseSettings):
         "http://localhost:8000/api/v1/auth/kakao/callback",
         alias="KAKAO_REDIRECT_URI"
     )
+    kakao_admin_key: str | None = Field(None, alias="KAKAO_ADMIN_KEY")
 
 
 settings = Settings()

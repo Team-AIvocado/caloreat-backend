@@ -268,3 +268,36 @@ class KakaoOAuthService:
 
         # commit은 라우터에서 처리 (프로필 조회 후)
         return user, access_token, refresh_token
+
+    @staticmethod
+    async def unlink_kakao_user(kakao_id: int) -> bool:
+        """
+        카카오 앱 연결 해제 (회원 탈퇴 시 호출)
+
+        Args:
+            kakao_id: 카카오 유저 ID
+
+        Returns:
+            성공 여부
+        """
+        if not settings.kakao_admin_key:
+            # Admin Key가 없으면 연결 해제 건너뜀
+            return False
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://kapi.kakao.com/v1/user/unlink",
+                    headers={
+                        "Authorization": f"KakaoAK {settings.kakao_admin_key}",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    data={
+                        "target_id_type": "user_id",
+                        "target_id": kakao_id,
+                    },
+                )
+                return response.status_code == 200
+        except Exception:
+            # 연결 해제 실패해도 탈퇴는 진행
+            return False

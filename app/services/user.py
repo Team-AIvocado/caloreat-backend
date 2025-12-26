@@ -15,6 +15,7 @@ from app.db.crud.user import UserCrud
 from app.db.schemas.user import (
     PasswordUpdate,
 )  # TODO: 왜 routers로 연결됐는데 정상작동됐는지 체크필요
+from app.services.oauth import KakaoOAuthService
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -158,10 +159,21 @@ class UserService:
     @staticmethod
     async def delete_user(db: AsyncSession, user_id: int) -> bool:
         try:
+            # 유저 정보 먼저 조회 (카카오 연결 해제를 위해)
+            user = await UserCrud.get_user_by_id(db, user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="없는 회원 입니다")
+
+            # 카카오 사용자인 경우 카카오 앱 연결 해제
+            if user.provider == "kakao" and user.username.startswith("kakao_"):
+                kakao_id = user.username.replace("kakao_", "")
+                if kakao_id.isdigit():
+                    await KakaoOAuthService.unlink_kakao_user(int(kakao_id))
+
             is_deleted = await UserCrud.delete_user_by_id(db, user_id)
             if not is_deleted:
-                raise HTTPException(status_code=404, detail="없는 회원 입니다")
-            
+                raise HTTPException(status_code=404, detail="삭제에 실패했습니다")
+
             await db.commit()
             return True
 
