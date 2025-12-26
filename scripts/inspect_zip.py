@@ -2,7 +2,8 @@ import zipfile
 import sys
 import os
 
-zip_path = '21.한국음식/kfood.zip'
+zip_path = "21.한국음식/kfood.zip"
+print(zip_path)
 
 if not os.path.exists(zip_path):
     print(f"File not found: {zip_path}")
@@ -10,8 +11,17 @@ if not os.path.exists(zip_path):
     print(f"Current working directory: {os.getcwd()}")
     sys.exit(1)
 
+
+# Fix for "File is not a zip file" / "BadZipFile" on Mac
+# Monkeypatch to bypass "Corrupt extra field" error
+def _decodeExtra(self):
+    pass
+
+
+zipfile.ZipInfo._decodeExtra = _decodeExtra
+
 try:
-    with zipfile.ZipFile(zip_path, 'r') as z:
+    with zipfile.ZipFile(zip_path, "r") as z:
         print(f"Inspecting {zip_path}...")
         namelist = z.namelist()
         print(f"Total files: {len(namelist)}")

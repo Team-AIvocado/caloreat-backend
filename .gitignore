@@ -198,3 +198,4 @@ pyrightconfig.json
 # seeding용 데이터셋 & 로그
 samples/*
 dataset_*.csv
+*.zip
