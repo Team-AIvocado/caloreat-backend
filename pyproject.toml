@@ -38,6 +38,8 @@ dependencies = [
     "python-multipart==0.0.20",
     "pillow>=12.0.0",
     "httpx>=0.28.1",
+    "authlib>=1.6.6",
+    "httpx-oauth>=0.16.1",
 ]
 
 [dependency-groups]
