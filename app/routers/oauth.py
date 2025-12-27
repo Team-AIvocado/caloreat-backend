@@ -54,8 +54,8 @@ async def google_login(response: Response):
 
 @router.get("/google/callback")
 async def google_callback(
-    code: str,
-    state: str,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     oauth_state: Optional[str] = Cookie(None),
 ):
@@ -71,9 +71,13 @@ async def google_callback(
     6. 프론트엔드로 리다이렉트
     """
     try:
+        # 필수 파라미터 검증 (동의 페이지에서 뒤로가기 등)
+        if not code or not state:
+            return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
+
         # 1. State 검증 (CSRF 방지)
         if not oauth_state or oauth_state != state:
-            raise HTTPException(status_code=400, detail="잘못된 요청입니다 (state 불일치)")
+            return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
 
         # 2. code로 Google access_token 교환
         token_data = await GoogleOAuthService.get_google_token(code)
@@ -129,11 +133,9 @@ async def google_callback(
 
         return redirect_response
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"Google OAuth 에러: {e}")
-        raise HTTPException(status_code=500, detail=f"구글 로그인 실패: {str(e)}")
+        return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
 
 
 @router.get("/kakao/login")
@@ -167,8 +169,8 @@ async def kakao_login(response: Response):
 
 @router.get("/kakao/callback")
 async def kakao_callback(
-    code: str,
-    state: str,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     oauth_state: Optional[str] = Cookie(None),
 ):
@@ -184,9 +186,13 @@ async def kakao_callback(
     6. 프론트엔드로 리다이렉트
     """
     try:
+        # 필수 파라미터 검증 (동의 페이지에서 뒤로가기 등)
+        if not code or not state:
+            return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
+
         # 1. State 검증 (CSRF 방지)
         if not oauth_state or oauth_state != state:
-            raise HTTPException(status_code=400, detail="잘못된 요청입니다 (state 불일치)")
+            return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
 
         # 2. code로 Kakao access_token 교환
         token_data = await KakaoOAuthService.get_kakao_token(code)
@@ -242,8 +248,6 @@ async def kakao_callback(
 
         return redirect_response
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"Kakao OAuth 에러: {e}")
-        raise HTTPException(status_code=500, detail=f"카카오 로그인 실패: {str(e)}")
+        return RedirectResponse(url="http://localhost:5173/?error=oauth_failed", status_code=302)
