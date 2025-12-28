@@ -117,13 +117,18 @@ class StatsService:
 
         # 프론트엔드 표시용 개별 식단 로그 리스트 생성
         daily_logs = []
+        from datetime import timezone, timedelta
+        # 한국 시간(KST) 변환을 위한 타임존 설정
+        KST = timezone(timedelta(hours=9))
+        
         for log in meal_logs:
             log_calories = sum(item.nutritions.get("calories", 0) * (item.quantity or 1.0) for item in log.meal_items if item.nutritions)
             name = ", ".join([item.foodname for item in log.meal_items])
             daily_logs.append(DailyLogItem(
                 id=log.id,
                 mealType=log.meal_type,
-                timestamp=log.eaten_at.strftime("%H:%M"),
+                # UTC 시간을 KST로 변환하여 포맷팅
+                timestamp=log.eaten_at.astimezone(KST).strftime("%H:%M"),
                 name=name,
                 calories=round(log_calories, 1)
             ))
@@ -212,7 +217,6 @@ class StatsService:
         today = date.today()
         
         if first_log_date:
-            # 통계 계산 범위의 시작과 끝 결정
             # 시작: 해당 월의 1일과 첫 기록일 중 늦은 날
             # 끝: 해당 월의 마지막 날과 오늘 중 빠른 날
             calc_start = max(start_date, first_log_date)
