@@ -26,6 +26,9 @@ zipfile.ZipInfo._decodeExtra = _decodeExtra
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(project_root, ".env"))
+
 # DB 관련 import
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text

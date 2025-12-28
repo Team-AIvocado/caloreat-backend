@@ -6,6 +6,9 @@ from sqlalchemy import text # Added import
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(project_root, ".env"))
+
 from app.db.database import AsyncSessionLocal
 
 import boto3

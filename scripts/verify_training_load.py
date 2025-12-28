@@ -11,6 +11,9 @@ from PIL import Image
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(project_root, ".env"))
+
 from app.core.settings import settings
 
 def verify_training_load(sample_size=10):

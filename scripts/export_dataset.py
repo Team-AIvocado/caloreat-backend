@@ -10,6 +10,9 @@ from sqlalchemy import text
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(project_root, ".env"))
+
 from app.db.database import AsyncSessionLocal
 
 
@@ -117,36 +120,6 @@ async def export_dataset():
         print(
             f"Accuracy: {count_correct / len(rows) * 100:.2f}% ({count_correct}/{len(rows)})"
         )
-
-        # --- MLOps Trigger ---
-        from app.core.settings import settings
-        import boto3
-
-        if settings.s3_bucket_name and settings.aws_access_key_id:
-            print(f"--- Uploading to S3 for MLOps Trigger ---")
-            s3_client = boto3.client(
-                "s3",
-                region_name=settings.aws_region,
-                aws_access_key_id=settings.aws_access_key_id,
-                aws_secret_access_key=settings.aws_secret_access_key,
-            )
-
-            # Re-read the file to upload bytes
-            with open(filename, "rb") as f:
-                csv_bytes = f.read()
-
-            file_key = f"datasets/raw/{filename}"
-            bucket_name = settings.s3_bucket_name
-
-            try:
-                s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=csv_bytes)
-                print(f"S3 에 업로드 성공: s3://{bucket_name}/{file_key}")
-                print("EventBridge로 MLOps pipeline trigger 완료.")
-            except Exception as e:
-                print(f"CSV 파일 업로드 실패: {e}")
-        else:
-            print("S3업로드를 스킵합니다 (환경변수가 없음)")
-
 
 if __name__ == "__main__":
     asyncio.run(export_dataset())

@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(project_root, ".env"))
+
 from app.db.database import AsyncSessionLocal
 from app.db.models.user import User
 from app.db.models.prediction_log import PredictionLog
