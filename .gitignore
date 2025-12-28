@@ -199,3 +199,5 @@ pyrightconfig.json
 samples/*
 dataset_*.csv
 *.zip
+# Local Docker Compose Override
+docker-compose.override.yml
