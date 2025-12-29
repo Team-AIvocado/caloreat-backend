@@ -117,13 +117,18 @@ class StatsService:
 
         # 프론트엔드 표시용 개별 식단 로그 리스트 생성
         daily_logs = []
+        from datetime import timezone, timedelta
+        # 한국 시간(KST) 변환을 위한 타임존 설정
+        KST = timezone(timedelta(hours=9))
+        
         for log in meal_logs:
             log_calories = sum(item.nutritions.get("calories", 0) * (item.quantity or 1.0) for item in log.meal_items if item.nutritions)
             name = ", ".join([item.foodname for item in log.meal_items])
             daily_logs.append(DailyLogItem(
                 id=log.id,
                 mealType=log.meal_type,
-                timestamp=log.eaten_at.strftime("%H:%M"),
+                # UTC 시간을 KST로 변환하여 포맷팅
+                timestamp=log.eaten_at.astimezone(KST).strftime("%H:%M"),
                 name=name,
                 calories=round(log_calories, 1)
             ))
@@ -209,15 +214,23 @@ class StatsService:
         
         # 어플 시작일 고려하여 평균 계산을 위한 divisor 결정
         first_log_date = await MealLogCrud.get_first_meal_log_date_db(db, user_id)
+        today = date.today()
+        
         if first_log_date:
-            # (해당 월의 일수)와 (종료일 - 첫 기록일 + 1) 중 작은 값 사용
-            days_since_start = (end_date - first_log_date).days + 1
-            divisor = max(1, min(last_day, days_since_start))
+            # 시작: 해당 월의 1일과 첫 기록일 중 늦은 날
+            # 끝: 해당 월의 마지막 날과 오늘 중 빠른 날
+            calc_start = max(start_date, first_log_date)
+            calc_end = min(end_date, today)
+            
+            if calc_start <= calc_end:
+                divisor = (calc_end - calc_start).days + 1
+            else:
+                divisor = 1 # 데이터가 없는 미래/과거 월의 경우 최소 1로 설정하여 0 나누기 방지
         else:
             divisor = last_day
 
         # 월 평균 영양소 계산
-        nutrients = StatsService.aggregate_nutrients(meal_logs, divisor=divisor)
+        nutrients = StatsService.aggregate_nutrients(meal_logs, divisor=max(1, divisor))
         total_calories = sum(
             sum(item.nutritions.get("calories", 0) * (item.quantity or 1.0) for item in log.meal_items if item.nutritions)
             for log in meal_logs
@@ -234,32 +247,40 @@ class StatsService:
             elif day <= 21: weeks[2] += calories
             else: weeks[3] += calories
 
-        today = date.today()
         for i, val in enumerate(weeks):
-            # 해당 주의 마지막 날짜 계산
+            # 해당 주의 시작과 끝 날짜 계산
+            week_start_day = i * 7 + 1
             week_end_day = (i + 1) * 7
             if i == 3: week_end_day = last_day
             
             try:
+                week_start_date = date(year, month, week_start_day)
                 week_end_date = date(year, month, week_end_day)
             except ValueError:
-                # 월말 날짜가 7의 배수가 아닐 경우 처리
                 week_end_date = date(year, month, last_day)
 
-            # 미래의 주 평균 값은 출력되지 않게 처리
-            if week_end_date > today:
-                continue
+            # 해당 주차에서 실제 활동한 일수 계산
+            if first_log_date:
+                w_start = max(week_start_date, first_log_date)
+                w_end = min(week_end_date, today)
+                
+                if w_start <= w_end:
+                    w_divisor = (w_end - w_start).days + 1
+                else:
+                    continue # 활동 기간이 아닌 주차는 제외
+            else:
+                w_divisor = 7 if i < 3 else (last_day - 21)
 
             chart_data.append(ChartData(
                 name=f"{i+1}주",
-                calories=round(val / 7, 1),
+                calories=round(val / max(1, w_divisor), 1),
                 goal=goal_calories
             ))
 
         return StatsResponse(
             type="monthly",
             date=f"{year}-{month:02d}",
-            totalCalories=round(total_calories / divisor, 1),
+            totalCalories=round(total_calories / max(1, divisor), 1),
             nutrients=nutrients,
             goals=nutrient_goals,
             chartData=chart_data,

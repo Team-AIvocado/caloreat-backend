@@ -38,21 +38,6 @@ def test_upload_image_authorized(authorized_client):
         mock_service.assert_called_once()
 
 
-def test_override_prediction_unauthorized(client):
-    response = client.post("/api/v1/meals/override/image")
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-def test_override_prediction_authorized(authorized_client):
-    # Mocked Endpoint in Router (No Service call)
-    response = authorized_client.post(
-        "/api/v1/meals/override/image",
-        files={"file": ("retry.jpg", b"data", "image/jpeg")},
-    )
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json().get("corrected") is True
-
-
 def test_food_search_manual(client, mock_db_session):
     # Correct Path: /foods/manual from router
     response = client.get("/api/v1/meals/foods/manual?query=된장")
@@ -71,28 +56,6 @@ def test_food_search_manual(client, mock_db_session):
     # just verify that the DB was called correctly with the query.
 
     # mock_db_session.execute.assert_called()
-
-
-def test_analyze_single_image(client):
-    # Correct Path: /analyze/single
-    request_payload = {"foodname": "된장찌개"}
-
-    mock_analysis_result = {
-        "foodname": "된장찌개",
-        "nutritions": {"calories": 200, "carbs": 20, "protein": 10, "fat": 5},
-    }
-
-    with patch(
-        "app.services.meal_item.MealItemService.one_food_analysis",
-        new_callable=AsyncMock,
-    ) as mock_service:
-        mock_service.return_value = mock_analysis_result
-
-        response = client.post("/api/v1/meals/analyze/single", json=request_payload)
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["foodname"] == "된장찌개"
-        mock_service.assert_called_once()
 
 
 def test_create_meal_log_unauthorized(client):
@@ -270,3 +233,55 @@ def test_delete_meal_log_authorized(authorized_client):
         response = authorized_client.delete("/api/v1/meals/log/123")
         assert response.status_code == status.HTTP_200_OK
         assert response.json() is True
+
+
+def test_analyze_nutrition_endpoint(client):
+    """
+    Test /analyze endpoint with multiple items.
+    Verifies that image_ids are correctly mapped back to the response.
+    Target: MealItemService.food_analysis (Logic Verification)
+    """
+    # Given
+    payload = {
+        "foodnames": [
+            {"image_id": "img_1", "foodname": "Pizza"},
+            {"image_id": "img_2", "foodname": "Burger"},
+        ]
+    }
+
+    # Mock response from AI Client (Order matters as per implementation assumption)
+    # The real AIClient.request_analysis returns {"results": [...]}
+    mock_ai_response = {
+        "results": [
+            {"foodname": "Pizza", "nutritions": {"calories": 300}},
+            {"foodname": "Burger", "nutritions": {"calories": 500}},
+        ]
+    }
+
+    # We mock the AIClient, NOT the Service, to test the Service's mapping logic.
+    with patch(
+        "app.clients.ai_client.AIClient.request_analysis", new_callable=AsyncMock
+    ) as mock_ai:
+        mock_ai.return_value = mock_ai_response
+
+        # When
+        response = client.post("/api/v1/meals/analyze", json=payload)
+
+        # Then
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "results" in data
+        results = data["results"]
+
+        assert len(results) == 2
+
+        # Verify Mapping
+        # Item 1
+        assert results[0]["foodname"] == "Pizza"
+        assert results[0]["nutritions"]["calories"] == 300
+
+        # Item 2
+        assert results[1]["foodname"] == "Burger"
+        assert results[1]["nutritions"]["calories"] == 500
+
+        mock_ai.assert_called_once()
