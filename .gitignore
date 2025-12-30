@@ -194,3 +194,10 @@ pyrightconfig.json
 *.tfvars
 *tfplan
 .terraform.tfstate.lock.info
+
+# seeding용 데이터셋 & 로그
+samples/*
+dataset_*.csv
+*.zip
+# Local Docker Compose Override
+docker-compose.override.yml

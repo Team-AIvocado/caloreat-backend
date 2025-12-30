@@ -54,8 +54,10 @@ def mock_current_user():
         password="hashedpassword",
         created_at=datetime.now(timezone.utc),  # Added created_at
         is_active=True,
+        provider="local",
         email_verified=False,
     )
+    user.provider = "local"
     return user
 
 

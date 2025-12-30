@@ -122,3 +122,42 @@ async def test_request_single_analysis_failure():
         # When & Then
         with pytest.raises(httpx.HTTPStatusError):
             await AIClient.request_single_analysis(food_name)
+
+
+@pytest.mark.asyncio
+async def test_request_analysis_batch_success():
+    """
+    Test request_analysis (Batch)
+    Verifies that it calls request_single_analysis in parallel and aggregates results.
+    """
+    # Given
+    foods = [{"food_name": "Pizza"}, {"food_name": "Burger"}]
+
+    # We mock request_single_analysis to verify the aggregation logic independent of HTTP
+    mock_single_results = [
+        {"nutritions": {"calories": 300}},  # Result for Pizza
+        {"nutritions": {"calories": 500}},  # Result for Burger
+    ]
+
+    with patch(
+        "app.clients.ai_client.AIClient.request_single_analysis", new_callable=AsyncMock
+    ) as mock_single:
+        mock_single.side_effect = mock_single_results
+
+        # When
+        result = await AIClient.request_analysis(foods)
+
+        # Then
+        assert "results" in result
+        assert len(result["results"]) == 2
+        assert result["results"] == mock_single_results
+
+        # Verify it was called twice
+        assert mock_single.call_count == 2
+
+        # Verify calls (Order might vary in real async, but gather preserves result order)
+        # Check that it was called with correct arguments
+        expected_calls = [("Pizza",), ("Burger",)]
+        # Extract args from calls
+        actual_calls = [call.args for call in mock_single.call_args_list]
+        assert actual_calls == expected_calls

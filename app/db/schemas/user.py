@@ -67,6 +67,7 @@ class UserRead(UserInDB):
     phone: str | None = None
     is_active: bool
     email_verified: bool | None = None
+    provider: str = "local"  # 소셜 로그인 구분 (local, kakao, google)
 
 
 class UserDetailRead(BaseModel):

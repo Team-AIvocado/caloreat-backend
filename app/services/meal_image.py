@@ -25,6 +25,9 @@ from app.common.image_utils import resize_image
 from app.clients.s3_client import S3Client
 
 
+from app.common.ai_utils import restore_original_inference
+
+
 # Meal Service
 class MealImageService:
     @staticmethod
@@ -86,10 +89,13 @@ class MealImageService:
 
             # 5. MLOps 구현용 Prediction Log 저장 (실패해도 메인 로직에는 영향 없도록 예외처리)
             try:
+                # [MLOps] LLM Fallback 이전의 원본 추론 결과로 복원
+                raw_inference = restore_original_inference(response)
+
                 new_log = PredictionLog(
                     image_id=image_id,
                     user_id=current_user_id,
-                    raw_response=response,
+                    raw_response=raw_inference,  # 복원된 원본 데이터 저장
                     model_version="v4",  # TODO: AI response에 버전 포함되면 교체
                 )
                 db.add(new_log)
