@@ -8,6 +8,7 @@ from app.db.database import get_db
 
 # 스키마
 from app.db.schemas.meal_image import MealImageResponse, OverrideResponse
+from app.db.schemas.food import FoodRead
 from app.db.schemas.meal_log import (
     MealLogUpdate,
     MealLogRead,
@@ -29,6 +30,7 @@ from datetime import date
 from app.services.meal_image import MealImageService
 from app.services.meal_item import MealItemService
 from app.services.meal_log import MealLogService
+from app.services.food import FoodService
 
 # meal domain ux흐름 일치 엔드포인트끼리 묶음
 # meal_log, meal_item, meal_image
@@ -90,28 +92,18 @@ async def override_prediction_endpoint(
 # 텍스트 입력(수동입력) # post x -> get
 # free-text 서비스 품질 박살 (ex. 떡볶이 / 떡복이 / 떡뽂이 / 떡볶기)
 # 사용자 입력 문자열을 믿지말것
-# TODO: 입력해도 안나올시 -> llm에 보내서 음식명 추출한다던지 대안필요
-@router.get("/foods/manual")
+# 음식입력시 검색기능 추가
+@router.get("/foods/manual", response_model=list[FoodRead])
 async def search_foods_manual_endpoint(
-    query: str,  # 사용자가 입력한 텍스트
-    limit: int = 10,  # 반환 개수
+    query: str,
     db: AsyncSession = Depends(get_db),
 ):
     """
     음식명 자동완성 검색 API
     GET /foods/search?query=된장
-    examples = ["된장찌개", "된장국", "김치찌개", "김치볶음밥", "카레", "치킨", "김밥"]
+    Returns: [{"id": 1, "name": "된장찌개"}, ...]
     """
-
-    # TODO: 실제 음식 DB 존재 시 SQL LIKE 검색 /
-    # 예시 mock 데이터
-    all_foods = ["된장찌개", "된장국", "김치찌개", "김치볶음밥", "카레", "치킨", "김밥"]
-
-    # 필터링
-    results = [f for f in all_foods if query in f][:limit]
-
-    # 자동완성 리스트 반환
-    return {"results": results}
+    return await FoodService.search_food(db, query)
 
 
 # --- back client - llm server ---
@@ -126,16 +118,22 @@ async def search_foods_manual_endpoint(
 
 
 @router.post("/analyze/single", response_model=SingleAnalysisResponse)
-async def analyze_single_nutrition_endpoint(request: SingleAnalysisRequest):
+async def analyze_single_nutrition_endpoint(
+    request: SingleAnalysisRequest,
+    db: AsyncSession = Depends(get_db),
+):
     # Service Skeleton 호출 (Single)
-    return await MealItemService.one_food_analysis(request.foodname)
+    return await MealItemService.one_food_analysis(db, request.foodname)
 
 
 # 복수요청 # TODO: 음식 복수선택시 llm module 복수 분석 router필요
 @router.post("/analyze", response_model=MultiAnalysisResponse)
-async def analyze_nutrition_endpoint(request: MultiAnalysisRequest):
+async def analyze_nutrition_endpoint(
+    request: MultiAnalysisRequest,
+    db: AsyncSession = Depends(get_db),
+):
     # Service Skeleton 호출 (List)
-    return await MealItemService.food_analysis(request.foodnames)
+    return await MealItemService.food_analysis(db, request.foodnames)
 
 
 # return {
@@ -176,6 +174,7 @@ async def read_meal_log_endpoint(
     db: AsyncSession = Depends(get_db),
 ):
     """
+    날짜별 식단조회
     ?date=2025-12-04
     example request : 2025-12-04
     """

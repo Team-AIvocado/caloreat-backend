@@ -1,5 +1,7 @@
 from app.clients.ai_client import AIClient
+from app.services.food import FoodService
 import uuid
+import asyncio
 from app.db.schemas.nutrition_analysis import AnalysisItem
 from app.db.schemas.nutrition_analysis import MultiAnalysisResponse
 
@@ -7,12 +9,12 @@ from app.db.schemas.nutrition_analysis import MultiAnalysisResponse
 class MealItemService:
     # AIClient.request_analysis 호출하여 음식 리스트에 대한 영양소 분석 및 반환
     # 음식에대한 영양소개념 < 내가먹은 식단에대한 영양소 스냅샷 개념
-    # TODO: food에대한 영양소테이블은 이후 추가
-
+    # TODO: 역할과 모듈 위치가 불일치함 food 도메인 생성됐으므로 이관필요
     @staticmethod
-    async def food_analysis(foodnames: list[AnalysisItem]):
+    async def food_analysis(db, foodnames: list[AnalysisItem]):
         """
         음식 리스트 -> AI 영양소 분석 요청
+        with DB Cache & Auto-Save
         foodnames: list[AnalysisItem]
         """
         # 1. 입력 데이터 가공
@@ -21,16 +23,21 @@ class MealItemService:
             {"id": item.image_id, "food_name": item.foodname} for item in foodnames
         ]
 
-        # 2. AI 서버 요청 (Analysis) - 순서 보장을 전제로 함 (Asyncio.gather)
-        analysis_result = await AIClient.request_analysis(foods_data)
+        # 2. 개별 분석 요청 병렬 처리 (DB 확인 -> 없으면 AI -> 저장)
+        # FoodService.get_or_create_food_from_analysis 내부에서 모든 로직 수행
+        tasks = [
+            FoodService.get_or_create_food_from_analysis(db, item["food_name"])
+            for item in foods_data
+        ]
+
+        # 순서 보장되어 반환됨
+        analysis_results = await asyncio.gather(*tasks)
 
         # 3. 결과 조립 (Assembly)
-        # 생성했던 ID와 AI 분석 결과를 순서대로 병합
-        raw_results = analysis_result.get("results", [])
         assembled_results = []
 
-        for original, result in zip(foods_data, raw_results):
-            # result는 영양소 정보와 AI가 인식한 food_name을 포함
+        for original, result in zip(foods_data, analysis_results):
+            # result는 {"foodname": ..., "nutritions": ...} 형태 (FoodService 반환값)
             item = result.copy()
             item["image_id"] = original["id"]  # ID 주입
             assembled_results.append(item)
@@ -39,27 +46,9 @@ class MealItemService:
 
     # 음식한개 #TODO: 작동확인 후 주석처리 or 삭제예정 food_analysis로 통합
     @staticmethod
-    async def one_food_analysis(foodname: str):
+    async def one_food_analysis(db, foodname: str):
         """
         음식명(Str) -> AI 영양소 분석 요청
+        with DB Cache & Defense Logic
         """
-        # 2. AI 서버 요청 (Analysis)
-        analysis_result = await AIClient.request_single_analysis(foodname)
-
-        # 3. 결과 반환
-        return analysis_result
-
-    # TODO: food도메인 추가 후 food tables db저장 로직 추가 필요 (MVP범위) ->
-    # 중요 ★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆★☆
-    # food도메인 현재 존재 x
-    # Food : 음식별 -영양소, 이름,한글이름, 스냅샷을 정규화한 테이블사용
-    # 음식의 표준 영양 정보와 메타데이터를 제공하는 마스터 기준 정보(Master Data)
-    # 역할: 중복된 외부 API 호출을 줄이고 데이터 일관성을 유지하기 위한 캐싱 및 기준값 제공
-
-    # 각 모델별 초기 라벨값도 food 도메인에 포함
-    # 이유: 동일한 음식에 대해 여러 모델이 서로 다른 라벨(Label)을 사용하더라도, 데이터의 유일성과 영양 정보의 일관성을 보장하기 위함
-
-    # 결론: 반정규화 전략으로 진행
-    # 향후 정규화 가능성을 해치지 않는선에서 도메인 결합
-    # 쿼리복잡도증가, 기능구현우선, 현재 기능스코프 구현을 위해서는 반정규화로 구현난이도를 낮춰야함
-    # AI데이터의 불확실성 (llm 반환값 신뢰도문제)
+        return await FoodService.get_or_create_food_from_analysis(db, foodname)
